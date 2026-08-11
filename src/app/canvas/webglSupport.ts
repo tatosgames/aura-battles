@@ -1,0 +1,1 @@
+export function canCreateWebGLContext(documentRef:Pick<Document,"createElement">=document):boolean{try{const canvas=documentRef.createElement("canvas");return canvas.getContext("webgl2")!==null||canvas.getContext("webgl")!==null;}catch{return false;}}

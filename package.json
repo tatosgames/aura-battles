@@ -1,0 +1,9 @@
+{
+  "name": "physics-game-template",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": { "dev": "vite", "build": "tsc --noEmit && vite build", "lint": "eslint .", "test": "vitest run", "test:browser": "npm run build && playwright test", "test:all": "npm run lint && npm run build && npm run test && npm run test:browser" },
+  "dependencies": { "@dimforge/rapier3d-deterministic": "0.19.3", "@react-three/drei": "^10.7.7", "@react-three/fiber": "^9.6.1", "lil-gui": "^0.21.0", "react": "^19.2.8", "react-dom": "^19.2.8", "three": "^0.169.0" },
+  "devDependencies": { "@eslint/js": "^9.11.1", "@playwright/test": "^1.61.1", "@types/react": "^19.2.7", "@types/react-dom": "^19.2.3", "@types/three": "^0.169.0", "@typescript-eslint/eslint-plugin": "^8.8.0", "@typescript-eslint/parser": "^8.8.0", "@vitejs/plugin-react": "^5.1.4", "eslint": "^9.11.1", "eslint-config-prettier": "^9.1.0", "happy-dom": "^20.11.1", "typescript": "^5.6.2", "vite": "^5.4.8", "vite-plugin-wasm": "3.6.0", "vitest": "^2.1.9" }
+}

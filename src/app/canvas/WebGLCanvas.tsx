@@ -1,0 +1,2 @@
+import { Canvas } from "@react-three/fiber";import { canCreateWebGLContext } from "./webglSupport";import type { ReactNode } from "react";
+export function WebGLCanvas({children,onCreated}:{children:ReactNode;onCreated?:(canvas:HTMLCanvasElement)=>void}){if(!canCreateWebGLContext())return <div role="status">WebGL is unavailable; the sandbox controls remain available.</div>;return <Canvas shadows camera={{position:[12,9,12],fov:45}} onCreated={({gl})=>onCreated?.(gl.domElement)}>{children}</Canvas>}

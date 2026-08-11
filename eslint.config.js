@@ -1,0 +1,5 @@
+import js from "@eslint/js";
+import tseslint from "@typescript-eslint/eslint-plugin";
+import parser from "@typescript-eslint/parser";
+import prettier from "eslint-config-prettier";
+export default [js.configs.recommended,{files:["src/**/*.{ts,tsx}","tests/**/*.{ts,tsx}"],languageOptions:{parser,parserOptions:{ecmaVersion:"latest",sourceType:"module",ecmaFeatures:{jsx:true}},globals:{window:"readonly",document:"readonly",performance:"readonly",requestAnimationFrame:"readonly",cancelAnimationFrame:"readonly",console:"readonly",AudioContext:"readonly",HTMLElement:"readonly",HTMLCanvasElement:"readonly",Document:"readonly",PointerEvent:"readonly",URLSearchParams:"readonly"}},plugins:{"@typescript-eslint":tseslint},rules:{...tseslint.configs.recommended.rules,"@typescript-eslint/no-unused-vars":["warn",{argsIgnorePattern:"^_"}]}},prettier,{ignores:["dist/","node_modules/","test-results/"]}];
