@@ -1,0 +1,8 @@
+{
+  "gravity": [0, -14.5, 0],
+  "layers": ["ground", "fighterA", "fighterB", "prop", "crowd"],
+  "stageRadius": 7.5,
+  "spawns": [[-2.6, 1.15, 0], [2.6, 1.15, 0]],
+  "propDrop": [0, 4.2, 0],
+  "impulseCap": 42
+}

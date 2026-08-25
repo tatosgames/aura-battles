@@ -51,6 +51,13 @@ React 19, React Three Fiber, Three.js, deterministic Rapier, TypeScript strict m
 
 This template deliberately does not provide game rules, characters, combat, scores, menus, matchmaking, analytics, remote assets, or a platform SDK integration. Build those as a domain layer on top of `src/engine`, never by importing from `src/demo`.
 
-Read [architecture](docs/ARCHITECTURE.md), [extension instructions](docs/EXTENDING.md), [reuse matrix](docs/REUSE_MATRIX.md), [provenance](docs/PROVENANCE.md), [R3F/Drei guidance](docs/react-three-fiber-and-drei.md), [Three.js physics](docs/threejs-physics.md), [generic game-design rules](docs/GAME_DESIGN_AND_JUICE_RULES.md), [vendor integration](docs/VENDOR_INTEGRATION.md), and [UI/transitions](docs/UI_AND_REACT_TRANSITIONS.md) before extending it.
+Read [architecture](docs/ARCHITECTURE.md), [extension instructions](docs/EXTENDING.md), [reuse matrix](docs/REUSE_MATRIX.md), [provenance](docs/PROVENANCE.md), [R3F/Drei guidance](docs/react-three-fiber-and-drei.md), [Three.js physics](docs/threejs-physics.md), [game-design and juice rules](docs/GAME_DESIGN_AND_JUICE_RULES.md), [vendor integration](docs/VENDOR_INTEGRATION.md), [UI architecture and responsive rules](docs/UI_ARCHITECTURE_AND_RESPONSIVE_RULES.md), and [UI/transitions](docs/UI_AND_REACT_TRANSITIONS.md) before extending it.
 
 Repository-local implementation guidance for future agents lives in [`.agents/skills/threejs-rapier-template/SKILL.md`](.agents/skills/threejs-rapier-template/SKILL.md).
+
+## Local reference projects
+
+Use these projects as implementation and visual references when extending Aura Battles. Keep their code and assets separate from this repository unless a task explicitly asks for reuse.
+
+- `fight3dstickman` — `C:\Projects\GitHub\fight3dstickman` — local 3D fighting-game reference for R3F presentation, combat feel, HUD patterns, assets, and browser playtesting.
+- `smash-royale` — `C:\Projects\GitLab\RisingPixel\smash-royale` — local destruction-game reference for levels, physics tuning, camera framing, and presentation feedback.

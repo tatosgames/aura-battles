@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "card-game": {
+      "source": "gamedev-skills/awesome-gamedev-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/genres/card-game/SKILL.md",
+      "computedHash": "baccc2e6f19f0187f675449a0d81e0feed8667eccd2bbb67f32bc1ab1bb3f4d5"
+    }
+  }
+}
