@@ -82,31 +82,34 @@ export function AuraBattleApp() {
     },
     onVisibilityChange: (hidden) => { if (hidden) void lifecycle.current.stopGameplay(); },
    });
-   loop.current.start();
    void lifecycle.current.loadingFinished();
    setReady(true);
   });
   return () => {
    alive = false;
-   loop.current?.stop();
+   loop.current = undefined;
    battle.current?.dispose();
    battle.current = undefined;
    void lifecycle.current.stopGameplay();
   };
  }, [query]);
  const updatePaused = useCallback((value: boolean) => { setPaused(value); loop.current?.setPaused(value); void lifecycle.current.setPaused(value); }, []);
+ const pausedBeforeContextLoss = useRef(false);
+ const pauseForContextLoss = useCallback(() => { pausedBeforeContextLoss.current = loop.current?.isPaused() ?? true; loop.current?.setPaused(true); setPaused(true); void lifecycle.current.stopGameplay(); }, []);
+ const resumeAfterContextRestore = useCallback(() => { const wasPaused = pausedBeforeContextLoss.current; loop.current?.setPaused(wasPaused); setPaused(wasPaused); }, []);
  const debugControls = useMemo(() => ({
   paused, debugWireframe, setPaused: updatePaused, setDebugWireframe,
   reset: () => battle.current?.restart(),
  }), [paused, debugWireframe, updatePaused]);
  return ready && battle.current
-  ? <RunningMatch battle={battle.current} director={director.current} excitement={excitement} sparks={sparks.current} flash={flash} debug={debugWireframe} controls={debugControls} onInteract={() => lifecycle.current.playerInteraction()} />
+  ? <RunningMatch battle={battle.current} loop={loop.current!} director={director.current} excitement={excitement} sparks={sparks.current} flash={flash} debug={debugWireframe} controls={debugControls} onInteract={() => lifecycle.current.playerInteraction()} onContextLost={pauseForContextLoss} onContextRestored={resumeAfterContextRestore} />
   : <div className="stage"><div role="status" className="boot">Loading arena…</div></div>;
 }
-function RunningMatch({ battle, director, excitement, sparks, flash, debug, controls, onInteract }: {
+function RunningMatch({ battle, loop, director, excitement, sparks, flash, debug, controls, onInteract, onContextLost, onContextRestored }: {
  battle: AuraBattleController; director: CameraDirector; excitement: { current: number }; sparks: SparkPool;
+ loop: FixedStepLoop;
  flash: RefObject<HTMLDivElement | null>; debug: boolean;
- controls: ComponentProps<typeof DebugPanel>["controls"]; onInteract: () => void;
+ controls: ComponentProps<typeof DebugPanel>["controls"]; onInteract: () => void; onContextLost: () => void; onContextRestored: () => void;
 }) {
  const state = useSyncExternalStore(battle.bridge.subscribe, battle.bridge.getSnapshot) as BattleSnapshot;
  const propOrder = useMemo<{ id: string; kind: PropKind }[]>(() => battle.propOrder(), [battle, state.propCount]);
@@ -119,7 +122,7 @@ function RunningMatch({ battle, director, excitement, sparks, flash, debug, cont
  return (
   <div className="stage">
    <div className="viewport">
-    <WebGLCanvas>
+    <WebGLCanvas loop={loop} onContextLost={onContextLost} onContextRestored={onContextRestored}>
      <ArenaScene arena={battle.arena} director={director} propOrder={propOrder} excitement={excitement} sparks={sparks} debug={debug} />
     </WebGLCanvas>
    </div>

@@ -28,6 +28,14 @@ test("opens a duel, plays a card and moves the Aura meter", async ({ page }) => 
  }, null, { timeout: 60_000 });
  expect(errors).toEqual([]);
 });
+test("keeps the R3F renderer alive through portrait and landscape resizes", async ({ page }) => {
+ const errors = await boot(page, "fast=1&seed=13");
+ await page.setViewportSize({ width: 390, height: 844 });
+ await expect(page.locator("canvas[data-testid=game-renderer]")).toBeVisible();
+ await page.setViewportSize({ width: 844, height: 390 });
+ await expect(page.locator("canvas[data-testid=game-renderer]")).toBeVisible();
+ expect(errors).toEqual([]);
+});
 test("plays a warmed match through to a Final Move and a rematch", async ({ page }) => {
  test.setTimeout(240_000);
  const errors = await boot(page, "fast=1&warm=1&seed=13");
