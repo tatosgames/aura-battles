@@ -27,10 +27,10 @@ while (Date.now() - started < budgetMs) {
   if (key !== last) { last = key; log.push(`t${state.turn} ${state.phase} prompt=${state.prompt} aura=${state.a}/${state.b} hype=${state.ha}/${state.hb} props=${state.props} "${state.callout}"`); seen.add(state.phase); }
   if (state.winner !== null) break;
   if (state.prompt === 0) {
-    if (state.final) { await page.locator(".primary.final").click().catch(() => {}); }
+    if (state.final) { await page.locator("button.meter-final-ready").click().catch(() => {}); }
     else {
-      const chaos = page.locator('.card-live:has-text("CHAOS")');
-      const card = (prefer === 'chaos' && await chaos.count()) ? chaos.first() : page.locator('.card-live').first();
+      const chaos = page.locator('.card-playable:has-text("CHAOS")');
+      const card = (prefer === 'chaos' && await chaos.count()) ? chaos.first() : page.locator('.card-playable').first();
       if (await card.count()) await card.click().catch(() => {});
       else await page.locator('.ghost').click().catch(() => {});
     }

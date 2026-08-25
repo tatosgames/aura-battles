@@ -3,7 +3,8 @@ import { cardOf, type CardId } from "../rules/CardDefinition";
 import type { Phase } from "../rules/BattleState";
 import type { BattleActions, BattleSnapshot } from "../AuraBattleController";
 import { HUMAN } from "../AuraBattleController";
-import { CardView } from "./CardView";
+import { CardView, type CardAvailability } from "./CardView";
+import { GameIcon } from "./GameIcon";
 import { Meters } from "./Meters";
 /** Drains without re-rendering React: the ring is the tensest thing on screen and must stay smooth. */
 function WindowTimer({ startedAt, seconds }: { startedAt: number; seconds: number }) {
@@ -23,38 +24,46 @@ function WindowTimer({ startedAt, seconds }: { startedAt: number; seconds: numbe
  return <div className="timer"><div ref={bar} className="timer-fill" /></div>;
 }
 const PROMPT: Partial<Record<Phase, string>> = {
- CHOOSE: "YOUR MOVE", COUNTER: "COUNTER?", FAIL: "RECOVER?", FINAL_COUNTER: "FINAL COUNTER?",
+ CHOOSE: "CHOOSE A MOVE", COUNTER: "COUNTER", FAIL: "SAVE THE MOMENT", FINAL_COUNTER: "STEAL THE FINAL",
 };
 const WAITING: Partial<Record<Phase, string>> = {
- CHOOSE: "THEY ARE POSING…", COUNTER: "WILL THEY ANSWER?", FAIL: "THEY ARE ON THE FLOOR", FINAL_COUNTER: "THEY ARE DECIDING",
+ CHOOSE: "REDD IS CHOOSING", COUNTER: "REDD IS ANSWERING", FAIL: "REDD CAN RECOVER", FINAL_COUNTER: "REDD CAN STEAL IT",
  PERFORM: "", RECOVER: "", SCORE: "", INTRO: "AURA BATTLES", FINAL_DECLARED: "FINAL MOVE INCOMING",
  FINAL_PERFORM: "", MATCH_OVER: "",
 };
 const ANSWERING_PHASES: Phase[] = ["COUNTER", "FINAL_COUNTER"];
+const DECISION_PHASES: Phase[] = ["CHOOSE", "COUNTER", "FAIL", "FINAL_COUNTER"];
 export function BattleHud({ state, actions }: { state: BattleSnapshot; actions: BattleActions }) {
  const you = state.fighters[HUMAN];
  const them = state.fighters[HUMAN === 0 ? 1 : 0];
  const yourTurn = state.promptSide === HUMAN;
  const offered: CardId[] = yourTurn ? state.options : [];
- const banner = yourTurn ? PROMPT[state.phase] ?? "" : WAITING[state.phase] ?? "";
- // Only surfaced while there is something to answer — the rest of the time it was ambient chrome
- // duplicating what the arena performance and the callouts already show.
  const answering = ANSWERING_PHASES.includes(state.phase) && state.chain.length > 0
   ? cardOf(state.chain[state.chain.length - 1].card).name
   : null;
+ const prompt = yourTurn
+  ? `${PROMPT[state.phase] ?? ""}${answering ? ` · ${answering}` : ""}`
+  : WAITING[state.phase] ?? "";
+ const showDecision = yourTurn && DECISION_PHASES.includes(state.phase);
+ const visibleCards = state.phase === "CHOOSE" ? you.hand : offered;
+ const availabilityOf = (card: CardId): CardAvailability => {
+  if (offered.includes(card)) return "playable";
+  if (state.phase === "CHOOSE" && cardOf(card).counters.includes("FINAL")) return "reserved";
+  return "unavailable";
+ };
  return (
   <div className="hud">
    <div className="hud-top">
-    <Meters fighter={you} mirrored={false} active={state.activeSide === you.side} />
+    <Meters fighter={you} mirrored={false} active={state.activeSide === you.side} onFinal={state.canDeclareFinal ? actions.declareFinal : undefined} />
     <div className="hud-center">
-     {answering && <div className="hud-answering">answering {answering}</div>}
-     {banner && <div className={`hud-banner${yourTurn ? " urgent" : ""}`}>{banner}</div>}
+     {prompt ? <div className={`hud-prompt${yourTurn ? " urgent" : ""}`}>{prompt}</div> : null}
+     {yourTurn && state.phase === "FAIL" ? <div className="hud-context"><GameIcon name="RECOVERY"/>{you.recoveries.length} RECOVERIES LEFT</div> : null}
      <WindowTimer startedAt={state.windowStartedAt} seconds={yourTurn ? state.windowSeconds : 0} />
     </div>
     <Meters fighter={them} mirrored active={state.activeSide === them.side} />
    </div>
    <div className="callouts">
-    {state.callouts.slice(-3).map((callout) => (
+    {state.callouts.slice(-2).map((callout) => (
      <div key={callout.id} className={`callout tone-${callout.tone}${callout.side === null ? "" : callout.side === HUMAN ? " side-left" : " side-right"}`}>{callout.text}</div>
     ))}
    </div>
@@ -64,32 +73,25 @@ export function BattleHud({ state, actions }: { state: BattleSnapshot; actions: 
      <p>{state.winner === HUMAN ? "You closed it out. Nobody recovers from that." : `${them.name} took the moment. Run it back.`}</p>
      <button type="button" className="primary" onClick={actions.restart}>REMATCH</button>
     </div>
-   ) : (
+   ) : showDecision ? (
     <div className="hand">
      <div className="hand-track">
-      {(state.phase === "FAIL" && yourTurn ? offered : you.hand).map((card, index) => (
+      {visibleCards.map((card, index) => (
        <CardView
         key={`${card}-${index}`}
         card={card}
-        enabled={yourTurn && offered.includes(card)}
+        availability={availabilityOf(card)}
         onPlay={actions.playCard}
        />
       ))}
      </div>
-     {(state.canDeclareFinal || (yourTurn && state.phase !== "CHOOSE")) && (
+     {state.phase !== "CHOOSE" ? (
       <div className="hand-side">
-       {state.canDeclareFinal && (
-        <button type="button" className="primary final" onClick={actions.declareFinal}>
-         FINAL MOVE<small>{cardOf(you.finalMove).name}</small>
-        </button>
-       )}
-       {yourTurn && state.phase !== "CHOOSE" && (
-        <button type="button" className="ghost" onClick={actions.pass}>LET IT LAND</button>
-       )}
+       <button type="button" className="ghost" onClick={actions.pass}>LET IT LAND</button>
       </div>
-     )}
+     ) : null}
     </div>
-   )}
+   ) : null}
   </div>
  );
 }

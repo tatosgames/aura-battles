@@ -13,7 +13,7 @@ for (let i = 0; i < Number(steps); i++) {
     const s = window.__aura.bridge.getSnapshot();
     return s.promptSide === 0;
   }, null, { timeout: 30000 }).catch(() => {});
-  const card = page.locator(".card-live").first();
+  const card = page.locator(".card-playable").first();
   if (await card.count()) await card.click().catch(() => {});
   await page.waitForTimeout(900);
 }

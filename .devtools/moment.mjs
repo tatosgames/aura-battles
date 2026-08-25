@@ -8,7 +8,7 @@ await page.goto(`http://localhost:5173?seed=${seed}`,{waitUntil:"load"});
 await page.waitForFunction(()=>window.__aura!==undefined,null,{timeout:15000});
 for(let i=0;i<Number(clicks);i++){
  await page.waitForFunction(()=>window.__aura.bridge.getSnapshot().promptSide===0,null,{timeout:30000}).catch(()=>{});
- const card=page.locator(".card-live").first();
+ const card=page.locator(".card-playable").first();
  if(await card.count())await card.click().catch(()=>{});
  await page.waitForTimeout(Number(settle));
 }

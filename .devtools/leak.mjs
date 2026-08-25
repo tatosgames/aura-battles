@@ -15,8 +15,8 @@ for (let round = 0; round < 3; round++) {
   while (Date.now() < deadline) {
     const s = await page.evaluate(() => window.__aura.bridge.getSnapshot());
     if (s.promptSide === 0) {
-      const chaos = page.locator('.card-live:has-text("CHAOS")');
-      const card = (await chaos.count()) ? chaos.first() : page.locator(".card-live").first();
+      const chaos = page.locator('.card-playable:has-text("CHAOS")');
+      const card = (await chaos.count()) ? chaos.first() : page.locator(".card-playable").first();
       if (await card.count()) await card.click().catch(() => {});
     }
     await page.waitForTimeout(130);

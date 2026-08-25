@@ -1,7 +1,7 @@
 *{box-sizing:border-box}
 :root{
  --hud-pad: clamp(8px, 2.5vw, 16px);
- --meter-w: clamp(128px, 34vw, 300px);
+ --meter-w: clamp(156px, 32vw, 286px);
  --card-w: clamp(128px, 40vw, 172px);
  --callout-size: clamp(1.05rem, 4.5vw, 1.7rem);
  --safe-t: env(safe-area-inset-top, 0px);
@@ -11,6 +11,7 @@
 }
 body{margin:0;background:#070a12;color:#e6edf7;font:16px/1.35 "Segoe UI",system-ui,sans-serif;overflow:hidden}
 button{border:1px solid #8192a3;border-radius:6px;background:#fff;padding:9px 12px;font:inherit;cursor:pointer}
+button:focus-visible{outline:2px solid #fff;outline-offset:3px}
 canvas{touch-action:none;display:block}
 
 /* Aura Battles ------------------------------------------------------------------ */
@@ -26,29 +27,41 @@ canvas{touch-action:none;display:block}
 .hud>*{pointer-events:auto}
 .hud-top{display:grid;grid-template-columns:1fr auto 1fr;gap:clamp(6px,2vw,12px);align-items:start}
 
-.meter{background:linear-gradient(180deg,#111a2bd9,#0b1120d9);border:1px solid #1f2c44;border-radius:10px;
+.meter{background:#0b1120e8;border:1px solid #273550;border-radius:10px;
  padding:clamp(6px,1.6vw,9px) clamp(8px,2.2vw,12px);width:var(--meter-w);transition:border-color .2s,box-shadow .2s}
 .meter-right{margin-left:auto;text-align:right}
-.meter-active{border-color:#3b82f6;box-shadow:0 0 0 1px #3b82f655,0 6px 22px #3b82f622}
+.meter-active{border-color:#60a5fa;box-shadow:0 8px 20px #0007}
 .meter-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .meter-right .meter-head{flex-direction:row-reverse}
 .meter-name{font-weight:800;letter-spacing:.16em;font-size:clamp(.68rem,2vw,.82rem)}
-.meter-value{font-weight:800;font-size:clamp(.9rem,3vw,1.15rem);color:#7dd3fc;display:inline-flex;align-items:baseline;gap:5px}
-.meter-recoveries{font-size:.62rem;font-weight:700;letter-spacing:.02em;color:#4ade80}
+.meter-value{font-weight:900;font-size:clamp(.9rem,3vw,1.1rem);color:#7dd3fc;display:inline-flex;align-items:center;gap:4px}
+.meter-value svg{width:13px;height:13px}
+.meter-value small{font-size:.5rem;letter-spacing:.08em;color:#8da0be}
 .meter-bar{height:7px;border-radius:99px;background:#1d2740;overflow:hidden;margin:6px 0}
 .meter-bar>i{display:block;height:100%;background:linear-gradient(90deg,#3b82f6,#a855f7);transition:width .35s cubic-bezier(.2,.9,.2,1)}
 .meter-right .meter-bar{transform:scaleX(-1)}
-.meter-hype{display:flex;gap:3px;align-items:center;font-size:clamp(.72rem,2.4vw,.9rem);flex-wrap:wrap}
+.meter-bottom{display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:0}
+.meter-right .meter-bottom{flex-direction:row-reverse}
+.meter-hype{display:flex;gap:3px;align-items:center;flex:0 0 auto}
 .meter-right .meter-hype{flex-direction:row-reverse}
-.flame{filter:grayscale(1);opacity:.28}
-.flame.on{filter:none;opacity:1}
-.meter-ready{margin:0 6px;font-size:.6rem;font-weight:800;letter-spacing:.1em;color:#fbbf24;animation:pulse 1s infinite}
-.meter-final{margin-top:5px;font-size:clamp(.58rem,1.8vw,.68rem);letter-spacing:.06em;color:#93a3bd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hype-pip{display:grid;place-items:center;width:17px;height:17px;color:#506078;opacity:.42}
+.hype-pip svg{width:15px;height:15px}
+.hype-pip.on{color:#fbbf24;opacity:1}
+.meter-final{min-width:0;display:flex;align-items:center;justify-content:flex-end;gap:4px;padding:0;border:0;background:transparent;color:#8292aa;
+ font-size:clamp(.52rem,1.6vw,.64rem);letter-spacing:.04em;white-space:nowrap;overflow:hidden}
+.meter-final svg{width:13px;height:13px;flex:0 0 auto}
+.meter-final span{overflow:hidden;text-overflow:ellipsis}
+.meter-final strong{color:#fff;font-size:.52rem;letter-spacing:.08em}
+button.meter-final{min-height:48px;margin-block:-6px;padding:5px 7px;border:1px solid #a855f7;background:#5b21b6;color:#fff;border-radius:7px;cursor:pointer;
+ animation:finalReady .6s cubic-bezier(.2,1.45,.4,1) both}
+button.meter-final:hover{background:#6d28d9}
 
 .hud-center{text-align:center;display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0}
-.hud-answering{font-size:clamp(.62rem,2.2vw,.72rem);letter-spacing:.06em;color:#9fb3d1;max-width:38ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.hud-banner{font-size:clamp(1.05rem,4.4vw,1.5rem);font-weight:900;letter-spacing:.1em;color:#c9d8ee;text-shadow:0 2px 18px #000}
-.hud-banner.urgent{color:#fff;animation:pulse .7s infinite}
+.hud-prompt{font-size:clamp(.78rem,2.7vw,1rem);font-weight:900;letter-spacing:.1em;color:#aebdd3;text-shadow:0 2px 14px #000;
+ max-width:min(32vw,300px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hud-prompt.urgent{color:#fff}
+.hud-context{display:flex;align-items:center;gap:5px;color:#86efac;font-size:.6rem;font-weight:800;letter-spacing:.06em}
+.hud-context svg{width:14px;height:14px}
 .timer{width:min(210px,60vw);height:6px;border-radius:99px;background:#1d2740;overflow:hidden}
 .timer-fill{height:100%;background:linear-gradient(90deg,#fbbf24,#ef4444);transform-origin:left center}
 
@@ -69,47 +82,60 @@ canvas{touch-action:none;display:block}
 .hand{display:flex;flex-direction:column;gap:8px;align-items:center}
 .hand-track{display:flex;gap:10px;justify-content:center;width:100%}
 .card{width:var(--card-w);min-height:clamp(96px,26vw,126px);flex:0 0 auto;display:flex;flex-direction:column;gap:5px;text-align:left;
- padding:clamp(8px,2vw,11px);border-radius:12px;border:1px solid #24324b;background:linear-gradient(180deg,#131c2ef2,#0c1322f2);
- color:#e6edf7;cursor:default;opacity:.42;transition:transform .16s cubic-bezier(.2,1.4,.4,1),opacity .16s,border-color .16s,box-shadow .16s}
-.card-live{opacity:1;cursor:pointer;border-color:var(--accent);box-shadow:0 8px 26px #0009}
-.card-live:hover{transform:translateY(-9px) scale(1.03)}
+ padding:clamp(8px,2vw,11px);border-radius:12px;border:1px solid #273550;background:#0f1728ed;
+ color:#e6edf7;cursor:default;opacity:.44;transition:transform .16s cubic-bezier(.2,1.4,.4,1),opacity .16s,border-color .16s,box-shadow .16s}
+.card-playable{opacity:1;cursor:pointer;border-color:var(--accent);box-shadow:0 8px 24px #0009}
+.card-playable:hover{transform:translateY(-7px) scale(1.02)}
+.card-playable:focus-visible{transform:translateY(-5px)}
+.card-reserved{opacity:.72}
+.card-unavailable{opacity:.42}
 .card-top{display:flex;justify-content:space-between;align-items:center}
-.card-kind{font-size:.6rem;font-weight:800;letter-spacing:.1em;color:var(--accent)}
-.card-aura{font-size:.95rem;font-weight:900;color:#7dd3fc}
+.card-kind{display:flex;align-items:center;gap:5px;font-size:.6rem;font-weight:800;letter-spacing:.1em;color:var(--accent)}
+.card-kind svg{width:14px;height:14px}
+.card-yields{display:flex;align-items:center;gap:5px}
+.card-yield{display:flex;align-items:center;gap:2px;font-size:.78rem;font-weight:900;color:#7dd3fc}
+.card-yield svg{width:12px;height:12px}
+.card-yield-hype{color:#fbbf24}
 .card-name{font-size:clamp(.82rem,2.6vw,.98rem);font-weight:800;line-height:1.15}
 .card-blurb{font-size:clamp(.62rem,2vw,.72rem);color:#a3b4cd;flex:1}
-.card-foot{font-size:.54rem;letter-spacing:.08em;color:#6b7f9e;text-transform:uppercase}
+.card-state{display:flex;align-items:center;gap:4px;color:#c084fc;font-size:.52rem;font-weight:900;letter-spacing:.08em}
+.card-state svg{width:12px;height:12px}
 
 .hand-side{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap}
 .primary{border:none;border-radius:10px;padding:9px 16px;min-height:48px;display:inline-flex;flex-direction:column;justify-content:center;
  align-items:center;gap:2px;font-weight:900;letter-spacing:.1em;background:linear-gradient(135deg,#a855f7,#3b82f6);color:#fff;box-shadow:0 8px 26px #a855f755}
-.primary.final{animation:pulse 1s infinite}
 .primary small{font-weight:600;letter-spacing:.03em;opacity:.85;font-size:.62rem}
 .ghost{background:#0d1524cc;border:1px solid #2c3b57;color:#b9c8de;font-size:.72rem;letter-spacing:.1em;padding:8px 14px;
  min-height:48px;display:inline-flex;align-items:center;border-radius:8px}
 
 .endcard{margin:auto;text-align:center;width:min(92vw,420px);background:#0b1120e8;border:1px solid #263349;border-radius:16px;
  padding:clamp(18px,4vw,26px) clamp(20px,5vw,34px);box-shadow:0 20px 70px #000a}
-.endcard h2{margin:0 0 6px;font-size:clamp(1.5rem,6vw,2.1rem);letter-spacing:.1em;background:linear-gradient(90deg,#a855f7,#7dd3fc);
- -webkit-background-clip:text;background-clip:text;color:transparent}
+.endcard h2{margin:0 0 6px;font-size:clamp(1.5rem,6vw,2.1rem);letter-spacing:.1em;color:#d8b4fe}
 .endcard p{margin:0 0 16px;color:#9fb3d1;font-size:.85rem}
 
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+@keyframes finalReady{from{transform:scale(.82);opacity:.4}to{transform:scale(1);opacity:1}}
 @keyframes calloutFade{to{opacity:0;transform:translateX(var(--dx)) translateY(-16px) scale(.92)}}
 @keyframes pop{from{transform:translateX(var(--dx)) scale(.55);opacity:0}to{transform:translateX(var(--dx)) scale(1);opacity:1}}
 
 /* Compact viewports: the hand becomes a swipeable row instead of wrapping over the arena. */
 @media (max-width: 700px){
+ :root{--card-w:min(72vw,172px)}
+ .hud-top{grid-template-columns:1fr 1fr}
+ .hud-center{grid-column:1/-1;grid-row:2}
+ .meter{width:100%}
+ .hud-prompt{max-width:88vw}
  .hand-track{overflow-x:auto;justify-content:flex-start;scroll-snap-type:x mandatory;padding:2px 6px 6px;margin:0 -6px;-webkit-overflow-scrolling:touch}
  .hand-track::-webkit-scrollbar{display:none}
  .card{scroll-snap-align:center}
 }
 
-/* Short landscape phones: height is the scarce axis, so drop the least essential row. */
+/* Short landscape phones: compact the persistent HUD without hiding the Final Move. */
 @media (max-height: 440px){
  .hud{gap:4px}
  .meter{padding:4px 8px}
- .meter-final{display:none}
+ .meter-bar{margin:4px 0}
+ button.meter-final{min-height:48px;margin-block:-9px;padding:3px 6px}
  .hand{gap:4px}
 }
 

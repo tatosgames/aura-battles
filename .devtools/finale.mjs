@@ -17,8 +17,8 @@ while(Date.now()<deadline){
  }
  if(s.winner!==null)break;
  if(s.prompt===0){
-  if(s.final)await page.locator(".primary.final").click().catch(()=>{});
-  else{const c=page.locator(".card-live").first();if(await c.count())await c.click().catch(()=>{});}
+  if(s.final)await page.locator("button.meter-final-ready").click().catch(()=>{});
+  else{const c=page.locator(".card-playable").first();if(await c.count())await c.click().catch(()=>{});}
  }
  await page.waitForTimeout(140);
 }

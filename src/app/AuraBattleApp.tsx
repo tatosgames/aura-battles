@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import arenaConfig from "@/data/auraArena.json";
 import { FixedStepLoop } from "@/engine/clock/FixedStepLoop";
 import { AuraBattleController, type BattleSnapshot } from "@/domain/auraBattle/AuraBattleController";
-import { ArenaScene } from "@/domain/auraBattle/view/ArenaScene";
+import { ArenaScene, type ArenaPresentationState } from "@/domain/auraBattle/view/ArenaScene";
 import { CameraDirector } from "@/domain/auraBattle/view/CameraDirector";
 import { BattleHud } from "@/domain/auraBattle/ui/BattleHud";
 import { SparkPool } from "@/domain/auraBattle/view/SparkPool";
@@ -113,6 +113,7 @@ function RunningMatch({ battle, loop, director, excitement, sparks, flash, debug
 }) {
  const state = useSyncExternalStore(battle.bridge.subscribe, battle.bridge.getSnapshot) as BattleSnapshot;
  const propOrder = useMemo<{ id: string; kind: PropKind }[]>(() => battle.propOrder(), [battle, state.propCount]);
+ const presentation = useMemo<ArenaPresentationState>(() => ({ activeSide: state.activeSide, phase: state.phase }), [state.activeSide, state.phase]);
  const actions = useMemo(() => ({
   playCard: (card: string) => { onInteract(); battle.bridge.actions.playCard(card); },
   pass: () => { onInteract(); battle.bridge.actions.pass(); },
@@ -123,7 +124,7 @@ function RunningMatch({ battle, loop, director, excitement, sparks, flash, debug
   <div className="stage">
    <div className="viewport">
     <WebGLCanvas loop={loop} onContextLost={onContextLost} onContextRestored={onContextRestored}>
-     <ArenaScene arena={battle.arena} director={director} propOrder={propOrder} excitement={excitement} sparks={sparks} debug={debug} />
+     <ArenaScene arena={battle.arena} director={director} propOrder={propOrder} excitement={excitement} sparks={sparks} presentation={presentation} debug={debug} />
     </WebGLCanvas>
    </div>
    <div ref={flash} className="flash" />

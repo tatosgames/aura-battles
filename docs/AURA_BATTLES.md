@@ -125,6 +125,29 @@ One scalar carries the whole feel:
 as authored. Dropping it toward `0` hands the weight back, and the fighter buckles, topples and
 becomes a pure ragdoll. Every fall in the game is that number moving.
 
+## Responsive layout
+
+Persistent HUD is deliberately thin — per [GAME_DESIGN_AND_JUICE_RULES.md](GAME_DESIGN_AND_JUICE_RULES.md)
+and [UI_ARCHITECTURE_AND_RESPONSIVE_RULES.md](UI_ARCHITECTURE_AND_RESPONSIVE_RULES.md), only status tied
+to the current decision stays always-on: the two meters, their always-visible Final Move, and the
+current prompt. The hand exists only while the human can act. Counter and Recovery windows show only
+legal answers plus `LET IT LAND`; performance and AI phases return the whole lower screen to the 3D
+stage. A turn counter, full chain text, card answer footers and deck/prop counts were removed rather
+than shrunk, since none of them answer an immediate decision.
+
+Each card uses one authored icon system instead of emoji, then exposes only category, immediate
+Aura/Hype yield, title and one rule line. Final activation is folded into its permanent meter badge,
+so readiness changes the existing object into the action instead of creating a second button. The
+active fighter is also marked in the arena with lighting and a floor ring; initiative can therefore
+be read from the scene without another HUD label.
+
+Sizing runs on `clamp()` tokens in `:root` (`--hud-pad`, `--meter-w`, `--card-w`, `--callout-size`)
+instead of fixed pixels, with `env(safe-area-inset-*)` folded into the HUD padding. Below 700px wide,
+the meters occupy one row and the compact prompt moves beneath them; the hand becomes a horizontally
+scrollable, scroll-snapping row instead of wrapping over the arena. Short landscape layouts compact
+the meters but never hide the Final Move. `CameraDirector` widens its vertical FOV on portrait
+aspects so both fighters stay in frame instead of one falling out of a narrow crop.
+
 ## Debug flags
 
 | URL | Effect |
@@ -148,5 +171,7 @@ node .devtools/autoplay.mjs 13 480000 . chaos
 
 Plays a whole match against the AI, printing every phase transition, both meters, prop count and any
 console error. The rest: `finale.mjs` captures the Final Move sequence, `phase.mjs` and `moment.mjs`
-screenshot a chosen phase, `perf.mjs` times the simulation step, and `leak.mjs` checks that a rematch
-returns every body, collider and joint to its baseline.
+screenshot a chosen phase at desktop size, `phase-viewport.mjs` does the same at an arbitrary viewport
+size for responsive checks, `responsive.mjs` autoplays a few turns at a given viewport and reports
+layout overflow plus any touch target under 48px, `perf.mjs` times the simulation step, and
+`leak.mjs` checks that a rematch returns every body, collider and joint to its baseline.

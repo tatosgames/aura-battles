@@ -10,10 +10,10 @@ while (Date.now() < deadline) {
   if (s.phase === target && (s.prompt === 0 || s.prompt === null)) { await page.waitForTimeout(Number(delay)); break; }
   if (s.winner !== null) break;
   if (s.prompt === 0 && s.phase !== target) {
-    if (s.final) await page.locator(".primary.final").click().catch(() => {});
+    if (s.final) await page.locator("button.meter-final-ready").click().catch(() => {});
     else {
-      const chaos = page.locator('.card-live:has-text("CHAOS")');
-      const card = (prefer === "chaos" && await chaos.count()) ? chaos.first() : page.locator(".card-live").first();
+      const chaos = page.locator('.card-playable:has-text("CHAOS")');
+      const card = (prefer === "chaos" && await chaos.count()) ? chaos.first() : page.locator(".card-playable").first();
       if (await card.count()) await card.click().catch(() => {});
       else await page.locator(".ghost").click().catch(() => {});
     }
