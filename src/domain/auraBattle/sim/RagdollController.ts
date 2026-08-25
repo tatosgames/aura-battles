@@ -8,11 +8,27 @@ import { quatFromEuler, quatMul, rotationTowards, rotateVector, type Quat } from
 const DRIVEN:FighterPartId[]=["pelvis","torso","head","upperArmL","upperArmR","upperLegL","upperLegR"];
 /** Angle-to-angular-velocity gain (1/s) and servo time constant (s) per driven part. */
 const RATE:Record<string,number>={pelvis:11,torso:12,head:13,upperArmL:14,upperArmR:14,upperLegL:12,upperLegR:12};
-const TAU:Record<string,number>={pelvis:.035,torso:.035,head:.04,upperArmL:.03,upperArmR:.03,upperLegL:.035,upperLegR:.035};
+// head/upperArm* run a slightly longer time constant than pelvis/torso on purpose: those two must
+// stay razor-tight (they encode "standing" vs "failing"), everything else earns a touch of overshoot.
+const TAU:Record<string,number>={pelvis:.035,torso:.035,head:.05,upperArmL:.042,upperArmR:.042,upperLegL:.035,upperLegR:.035};
 const MAX_SPIN=16;
 const clamp=(value:number,limit:number):number=>value<-limit?-limit:value>limit?limit:value;
 const ZERO:Euler=[0,0,0];
 const approach=(current:number,target:number,rate:number,dt:number):number=>current+(target-current)*Math.min(1,rate*dt);
+/**
+ * Fixed (never random) low-frequency sway per driven part, distinct phase per part so nothing moves
+ * in lockstep. This is what keeps a held pose from reading as a statue — it needs no seed because it
+ * is cosmetic secondary motion, not a decision the rules or a replay ever depend on.
+ */
+const SWAY:Record<string,{axis:0|1|2;phase:number}>={
+ pelvis:{axis:2,phase:.4},torso:{axis:0,phase:1.7},head:{axis:1,phase:2.6},
+ upperArmL:{axis:2,phase:.9},upperArmR:{axis:2,phase:3.3},upperLegL:{axis:0,phase:4.1},upperLegR:{axis:0,phase:5.8},
+};
+const SWAY_AMPLITUDE=.05;
+const swayOffset=(id:string,elapsed:number):number=>{
+ const {phase}=SWAY[id];
+ return (Math.sin((elapsed+phase)*3.8)+Math.sin((elapsed+phase)*10.6)*.5)*SWAY_AMPLITUDE;
+};
 export type FighterSide=0|1;
 export class RagdollController {
  private readonly body:ArticulatedBody<FighterPartId>;
@@ -24,6 +40,7 @@ export class RagdollController {
  private stiffness=1; private targetStiffness=1;
  private lift=0; private targetLift=0;
  private blendRate=7;
+ private elapsed=0;
  private rootTarget:[number,number];
  private readonly yaw:Quat;
  private poseId:PoseId="IDLE";
@@ -54,9 +71,25 @@ export class RagdollController {
  headPosition():{x:number;y:number;z:number}{return this.part("head").translation();}
  applyImpulse(id:FighterPartId,x:number,y:number,z:number):void{this.part(id).applyImpulse({x,y,z},true);}
  applyTorqueImpulse(id:FighterPartId,x:number,y:number,z:number):void{this.part(id).applyTorqueImpulse({x,y,z},true);}
+ /**
+  * A bounded, one-shot reaction to an incidental knock — not a scripted move. The axis comes from the
+  * pelvis's current velocity (a real jolt has a direction); when nothing is moving yet it falls back
+  * to a small fixed nod so an incidental bump is never silently absorbed. No randomness needed either
+  * way, which keeps this reaction fully deterministic for a given seed.
+  */
+ flinch(strength:number):void{
+  const amount=clamp(strength,1)*2.6;
+  const velocity=this.part("pelvis").linvel();
+  const planarSpeed=Math.hypot(velocity.x,velocity.z);
+  // Cross the horizontal velocity with "up" so the jolt reads as a sideways whip, not a spin in place.
+  const axis=planarSpeed>.3?{x:-velocity.z/planarSpeed,y:0,z:velocity.x/planarSpeed}:{x:1,y:0,z:0};
+  for(const id of ["head","upperArmL","upperArmR"] as FighterPartId[])
+   this.part(id).applyTorqueImpulse({x:axis.x*amount,y:axis.y*amount,z:axis.z*amount},true);
+ }
  isDown():boolean{const up=rotateVector(this.part("torso").rotation(),{x:0,y:1,z:0});return this.position().y<PELVIS_HEIGHT*.55||up.y<.35;}
  uprightness():number{return Math.max(0,rotateVector(this.part("torso").rotation(),{x:0,y:1,z:0}).y);}
  fixedUpdate(dt:number):void{
+  this.elapsed+=dt;
   this.balance=approach(this.balance,this.targetBalance,this.blendRate,dt);
   this.stiffness=approach(this.stiffness,this.targetStiffness,this.blendRate,dt);
   this.lift=approach(this.lift,this.targetLift,this.blendRate,dt);
@@ -65,11 +98,16 @@ export class RagdollController {
    this.knees[index]=approach(this.knees[index],this.targetKnees[index],this.blendRate,dt);
   }
   const authority=this.stiffness*(.25+.75*this.balance);
+  // A downed fighter (low balance) already gets all its motion from real physics; adding sway on
+  // top of that would fight the fall instead of selling it, so it fades out with balance.
+  const swayStrength=this.stiffness*Math.min(1,Math.max(.15,this.balance));
   for(const id of DRIVEN){
    const current=this.rotations.get(id)!,target=this.targetRotations.get(id)!;
    for(let axis=0;axis<3;axis++)current[axis]=approach(current[axis],target[axis],this.blendRate,dt);
    const part=this.body.parts.get(id)!.body;
-   const desired=quatMul(this.yaw,quatFromEuler(current[0],current[1],current[2]));
+   const swayed:Euler=[current[0],current[1],current[2]];
+   swayed[SWAY[id].axis]+=swayOffset(id,this.elapsed)*swayStrength;
+   const desired=quatMul(this.yaw,quatFromEuler(swayed[0],swayed[1],swayed[2]));
    const error=rotationTowards(part.rotation(),desired);
    const spin=part.angvel();const inertia=part.principalInertia();
    // Servo on angular velocity and scale by real inertia: torque tuned against mass alone detonates the ragdoll.
@@ -131,7 +169,7 @@ export class RagdollController {
   });
   this.rootTarget=[this.home[0],this.home[2]];
   FIGHTER_PARTS.forEach((id)=>this.rotations.set(id,[0,0,0]));
-  this.balance=.95;this.stiffness=1;this.lift=0;
+  this.balance=.95;this.stiffness=1;this.lift=0;this.elapsed=0;
   this.setPose("IDLE",1);
  }
  dispose():void{this.body.dispose(this.runtime);}

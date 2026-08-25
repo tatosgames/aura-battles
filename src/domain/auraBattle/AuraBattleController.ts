@@ -72,7 +72,10 @@ export class AuraBattleController {
   this.ai = new AIController(this.rng.fork(7));
   this.fighters = this.deal();
   const sink = (cue: Cue, side: Side) => this.handleCue(cue, side);
-  this.directors = [new MoveDirector(arena, 0, sink), new MoveDirector(arena, 1, sink)];
+  // Cosmetic-only presentation variance (impulse jitter, pace) gets its own RNG stream, derived from
+  // the match seed but never touching `this.rng` itself — the rules RNG's sequence (shuffles, fail
+  // rolls, AI) stays exactly as it was, and `?seed=` still reproduces an identical match on replay.
+  this.directors = [new MoveDirector(arena, 0, sink, createRng(seed ^ 0x9e3779b9)), new MoveDirector(arena, 1, sink, createRng(seed ^ 0x85ebca6b))];
   this.bridge = new GameBridge<BattleSnapshot, BattleActions>(this.snapshot(0), {
    playCard: (card) => this.playCard(card),
    pass: () => this.pass(),

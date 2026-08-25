@@ -57,6 +57,9 @@ button.meter-final:hover{color:#d8b4fe}
 
 .flash{position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 50% 45%,#ffffff55,transparent 60%);opacity:0}
 @keyframes flash{from{opacity:1}to{opacity:0}}
+.speedlines{position:absolute;inset:-15%;pointer-events:none;opacity:0;
+ background:repeating-conic-gradient(from 0deg,#e6edf7 0deg 1.1deg,transparent 1.1deg 9deg)}
+@keyframes speedlines{0%{opacity:0;transform:scale(1.5)}18%{opacity:.5}100%{opacity:0;transform:scale(.94)}}
 .callouts{display:flex;flex-direction:column;align-items:center;pointer-events:none}
 .callout{--dx:0;transform:translateX(var(--dx));font-weight:900;letter-spacing:.08em;font-size:var(--callout-size);text-shadow:0 3px 22px #000;
  animation:pop .25s cubic-bezier(.16,1,.3,1),calloutFade .5s 2.1s forwards}

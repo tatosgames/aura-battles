@@ -1,3 +1,4 @@
+import type { Rng } from "@/engine/math/rng";
 import type { CardDefinition } from "../rules/CardDefinition";
 import type { ArenaController } from "./ArenaController";
 import type { RagdollController } from "./RagdollController";
@@ -14,7 +15,9 @@ export class MoveDirector {
  private index=0;
  private elapsed=0;
  private duration=0;
- constructor(private readonly arena:ArenaController,readonly side:0|1,private readonly onCue:CueSink){}
+ /** Drawn once per performance: the same card never resolves at exactly the same tempo twice. */
+ private pace=1;
+ constructor(private readonly arena:ArenaController,readonly side:0|1,private readonly onCue:CueSink,private readonly rng:Rng){}
  get active():boolean{return this.script!==null;}
  get remaining():number{return this.script?Math.max(0,this.duration-this.elapsed):0;}
  private get self():RagdollController{return this.arena.fighters[this.side];}
@@ -25,17 +28,20 @@ export class MoveDirector {
   // Everything the script would have done after the moment it goes wrong is simply dropped.
   this.keys=[...script.keys.filter((key)=>key.t<failAt),...(failed&&script.fail?script.fail:[])].sort((a,b)=>a.t-b.t);
   this.script=script;this.card=card;this.index=0;this.elapsed=0;
+  this.pace=.92+this.rng.next()*.16;
   this.duration=failed&&script.fail?Math.max(failAt+1.6,script.fail[script.fail.length-1].t+1.4):script.duration;
  }
  stop():void{this.script=null;this.card=null;this.keys=[];this.index=0;}
  /** Returns true on the step the performance finishes. */
  fixedUpdate(dt:number):boolean{
   if(!this.script)return false;
-  this.elapsed+=dt;
+  this.elapsed+=dt*this.pace;
   while(this.index<this.keys.length&&this.keys[this.index].t<=this.elapsed)this.apply(this.keys[this.index++]);
   if(this.elapsed>=this.duration){this.stop();return true;}
   return false;
  }
+ /** ±spread magnitude variance, so the same keyframe never fires with an identical vector twice. */
+ private jitter(value:number,spread:number):number{return value===0?0:value*(1+(this.rng.next()*2-1)*spread);}
  private station(station:Station):[number,number]{
   const home=this.self.homePosition();const facing=this.self.facing();
   if(station==="home")return [home[0],home[2]];
@@ -49,8 +55,8 @@ export class MoveDirector {
   if(key.mirrorOpponent)this.self.setPose(this.opponent.currentPose);
   if(key.balance!==undefined)this.self.setBalance(key.balance);
   if(key.root){const [x,z]=this.station(key.root);this.self.setRootTarget(x,z);}
-  if(key.impulse)this.self.applyImpulse(key.impulse.part,key.impulse.x*facing,key.impulse.y,key.impulse.z);
-  if(key.torque)this.self.applyTorqueImpulse(key.torque.part,key.torque.x,key.torque.y,key.torque.z*facing);
+  if(key.impulse)this.self.applyImpulse(key.impulse.part,this.jitter(key.impulse.x,.22)*facing,this.jitter(key.impulse.y,.12),this.jitter(key.impulse.z,.22));
+  if(key.torque)this.self.applyTorqueImpulse(key.torque.part,this.jitter(key.torque.x,.22),this.jitter(key.torque.y,.22),this.jitter(key.torque.z,.22)*facing);
   if(key.spawnProp&&this.card?.spawnsProp){
    const [x,z]=this.station(key.spawnProp);
    this.arena.props.spawn(this.card.spawnsProp,[x,this.arena.config.propDrop[1],z],facing>0?0:Math.PI);
@@ -68,6 +74,8 @@ export class MoveDirector {
   if(!id)id=this.arena.props.spawn(kind,[position.x+this.self.facing()*.8,this.arena.config.propDrop[1],position.z],0);
   const source=this.arena.props.positionOf(id)!;
   const target=towardOpponent?this.opponent.position():{x:source[0]+this.self.facing()*3,y:1.4,z:source[2]};
-  this.arena.props.yeet(id,target.x-source[0],Math.max(.6,target.y-source[1]+.9),target.z-source[2],power);
+  // A small lateral miss so the same throw doesn't land on the exact same spot every time.
+  const wobbleX=(this.rng.next()*2-1)*.5,wobbleZ=(this.rng.next()*2-1)*.5;
+  this.arena.props.yeet(id,target.x-source[0]+wobbleX,Math.max(.6,target.y-source[1]+.9),target.z-source[2]+wobbleZ,this.jitter(power,.22));
  }
 }

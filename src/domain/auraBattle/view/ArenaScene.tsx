@@ -10,9 +10,12 @@ import { PropsView } from "./PropsView";
 import { Crowd } from "./Crowd";
 import { Sparks } from "./Sparks";
 import type { SparkPool } from "./SparkPool";
+import { BoundaryRing } from "./BoundaryRing";
+import type { BoundaryPulse } from "./BoundaryPulse";
 import type { CameraDirector } from "./CameraDirector";
-export type ArenaPresentationState={activeSide:Side;phase:Phase};
-export function ArenaScene({arena,director,propOrder,excitement,sparks,presentation,debug=false}:{arena:ArenaController;director:CameraDirector;propOrder:{id:string;kind:PropKind}[];excitement:{current:number};sparks:SparkPool;presentation:ArenaPresentationState;debug?:boolean}){
+import type { FaceReactionDirector } from "./FaceReactionDirector";
+export type ArenaPresentationState={activeSide:Side;phase:Phase;winner:Side|null};
+export function ArenaScene({arena,director,propOrder,excitement,sparks,boundaryPulse,presentation,faceReactions,debug=false}:{arena:ArenaController;director:CameraDirector;propOrder:{id:string;kind:PropKind}[];excitement:{current:number};sparks:SparkPool;boundaryPulse:BoundaryPulse;presentation:ArenaPresentationState;faceReactions:FaceReactionDirector;debug?:boolean}){
  const camera=useThree((state)=>state.camera) as PerspectiveCamera;
  const scene=useThree((state)=>state.scene);
  useEffect(()=>()=>arena.physics.updateDebug(scene,false),[arena,scene]);
@@ -21,6 +24,7 @@ export function ArenaScene({arena,director,propOrder,excitement,sparks,presentat
  const activeRing=useRef<Mesh>(null);
  const rim=useMemo(()=>Array.from({length:28},(_,index)=>{const angle=(index/28)*Math.PI*2;return [Math.cos(angle)*(radius+.15),Math.sin(angle)*(radius+.15)] as const;}),[radius]);
  useFrame((state,delta)=>{
+  faceReactions.update(delta);
   arena.physics.updateDebug(scene,debug);
   director.update(Math.min(delta,1/20),camera,arena.transforms,state.clock.elapsedTime);
   const pulse=.6+excitement.current*1.6;
@@ -28,7 +32,7 @@ export function ArenaScene({arena,director,propOrder,excitement,sparks,presentat
   if(spotA.current)spotA.current.intensity=28*pulse*(presentation.activeSide===0?1.15:.55)*(cinematic?1.2:1);
   if(spotB.current)spotB.current.intensity=28*pulse*(presentation.activeSide===1?1.15:.55)*(cinematic?1.2:1);
   if(activeRing.current){const base=presentation.activeSide*FIGHTER_FLOATS;activeRing.current.position.set(arena.transforms[base],.035,arena.transforms[base+2]);}
- });
+ },-10);
  return <>
   <color attach="background" args={["#0a0d16"]}/>
   <fog attach="fog" args={["#0a0d16",16,42]}/>
@@ -62,9 +66,10 @@ export function ArenaScene({arena,director,propOrder,excitement,sparks,presentat
    <meshStandardMaterial color="#0d1220" roughness={1}/>
   </mesh>
   <Crowd excitement={excitement}/>
-  <FighterView side={0} transforms={arena.transforms} palette={PALETTES[0]}/>
-  <FighterView side={1} transforms={arena.transforms} palette={PALETTES[1]}/>
+  <FighterView side={0} transforms={arena.transforms} palette={PALETTES[0]} presentation={presentation} faceReactions={faceReactions}/>
+  <FighterView side={1} transforms={arena.transforms} palette={PALETTES[1]} presentation={presentation} faceReactions={faceReactions}/>
   <PropsView order={propOrder} transforms={arena.propTransforms}/>
   <Sparks pool={sparks}/>
+  <BoundaryRing pulse={boundaryPulse}/>
  </>;
 }
