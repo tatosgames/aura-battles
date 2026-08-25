@@ -35,13 +35,13 @@ reading risk, riders, and the Final counter — not memorising bespoke card-vs-c
 Show precisely three contextual prompts, once per match:
 
 1. `REACH 10 AURA + 3 HYPE. THEN PLAY FINAL MOVE.`
-2. `PLAY ANY CARD. ITS ARROW SHOWS WHAT IT BEATS.`
-3. `FIND THE ICON THAT BEATS THE INCOMING MOVE.`
+2. `PLAY ANY CARD.`
+3. A dynamic map cue, for example `CHAOS BEATS COPY THAT.`
 
-Cards must show category, printed Aura/Hype, the `BEATS` arrow, one rider if present, visible risk
-if present, and a crown badge if the card is a Final counter. In a counter window, retain the whole
-hand; make only legal answers actionable. Aura is displayed as `current/10`, Hype as three pips,
-and the face-up Final Move remains visible in the meter.
+Cards must show category and its `BEATS` target, printed Aura/Hype, then at most one specific detail:
+rider, visible risk, or Final-counter crown. Do not render flavour copy in the operational hand. In a
+counter window, retain the whole hand; make only legal answers actionable. Aura is displayed as
+`current/10`, Hype as `current/3`, and the face-up Final Move remains visible in the scoreline.
 
 ## Engineering contract
 
@@ -49,8 +49,9 @@ and the face-up Final Move remains visible in the meter.
 - `AuraBattleController` owns phase transitions and is the only rules-to-simulation bridge.
 - Simulation and presentation may sell a fail, counter, or Final interruption, but cannot change it.
 - Keep all randomness seeded and decided before a performance begins.
-- Keep the DOM HUD responsive: persistent meters and prompt, action-only hand, swipeable hand on
-  narrow screens, and no horizontal overflow in portrait or landscape.
+- Keep the DOM HUD responsive: flat persistent scorelines, one contextual cue, an action-only
+  three-card hand visible as three columns on narrow screens, and no horizontal overflow in portrait
+  or landscape.
 
 The detailed shipping rules, decklists, and verification checklist live in
 [AURA_BATTLES.md](AURA_BATTLES.md). That file is authoritative when a design interpretation is

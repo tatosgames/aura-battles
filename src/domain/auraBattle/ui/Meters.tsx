@@ -11,14 +11,9 @@ export function Meters({ fighter, mirrored, active, onFinal }: { fighter: Fighte
    <div className="meter-head">
     <span className="meter-name">{fighter.name}</span>
     <span className="meter-value"><GameIcon name="AURA"/><span>{fighter.aura}/{AURA_TO_WIN}</span><small>AURA</small></span>
+    <span className="meter-hype" aria-label={`${fighter.hype} of ${HYPE_TO_WIN} Hype`}><GameIcon name="HYPE"/>{fighter.hype}/{HYPE_TO_WIN}</span>
    </div>
-   <div className="meter-bar" role="meter" aria-label={`${fighter.name} Aura`} aria-valuemin={0} aria-valuemax={AURA_TO_WIN} aria-valuenow={fighter.aura}><i style={{ width: `${(fighter.aura / AURA_TO_WIN) * 100}%` }} /></div>
    <div className="meter-bottom">
-    <div className="meter-hype" aria-label={`${fighter.hype} of ${HYPE_TO_WIN} Hype`}>
-    {Array.from({ length: HYPE_TO_WIN }, (_, index) => (
-     <span key={index} className={index < fighter.hype ? "hype-pip on" : "hype-pip"}><GameIcon name="HYPE"/></span>
-    ))}
-    </div>
     {onFinal ? <button type="button" className="meter-final meter-final-ready" onClick={onFinal} aria-label={`Play Final Move: ${finalName}`}>{finalContent}</button> : <div className={`meter-final${fighter.finalReady ? " meter-final-ready" : ""}`}>{finalContent}</div>}
    </div>
   </div>

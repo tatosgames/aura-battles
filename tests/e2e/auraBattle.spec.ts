@@ -16,9 +16,8 @@ async function boot(page: Page, query: string) {
 }
 test("opens a duel, plays a card and moves the Aura meter", async ({ page }) => {
  const errors = await boot(page, "fast=1&seed=13");
- await expect(page.getByText("AURA BATTLES")).toBeVisible();
  await waitForPrompt(page);
- await expect(page.getByText("CHOOSE A MOVE")).toBeVisible();
+ await expect(page.getByText("PLAY ANY CARD.")).toBeVisible();
  await expect(page.locator(".card-foot, .pile")).toHaveCount(0);
  await expect(page.locator("body")).not.toContainText("PROPS ON STAGE");
  await expect(page.locator("body")).not.toContainText("IN DECK");
@@ -39,13 +38,13 @@ test("opens a duel, plays a card and moves the Aura meter", async ({ page }) => 
 test("teaches the map and keeps non-counters readable", async ({ page }) => {
  const errors = await boot(page, "fast=1&seed=13");
  await waitForPrompt(page);
- await expect(page.getByText("PLAY ANY CARD. ITS ARROW SHOWS WHAT IT BEATS.")).toBeVisible();
+ await expect(page.getByText("PLAY ANY CARD.")).toBeVisible();
  await page.locator(".card-playable").first().click();
  await page.waitForFunction(() => {
   const state = (window as unknown as { __aura: { bridge: { getSnapshot(): { phase: string; promptSide: number | null } } } }).__aura.bridge.getSnapshot();
   return state.phase === "COUNTER" && state.promptSide === 0;
  }, null, { timeout: 60_000 });
- await expect(page.getByText("FIND THE ICON THAT BEATS THE INCOMING MOVE.")).toBeVisible();
+ await expect(page.getByText(/CHAOS BEATS COPY THAT/)).toBeVisible();
  await expect(page.getByText(/BEATS/).first()).toBeVisible();
  expect(await page.locator(".card-playable").count()).toBeGreaterThan(0);
  expect(await page.locator(".card-unavailable").count()).toBeGreaterThan(0);
@@ -57,6 +56,15 @@ test("keeps the R3F renderer alive through portrait and landscape resizes", asyn
  await waitForPrompt(page);
  await expect(page.locator("canvas[data-testid=game-renderer]")).toBeVisible();
  await expect(page.locator(".meter-final")).toHaveCount(2);
+ expect(await page.locator(".card-playable").count()).toBe(3);
+  const mobileLayout = await page.evaluate(() => ({
+    viewportWidth: window.innerWidth,
+    cards: Array.from(document.querySelectorAll(".card-playable")).map((card) => {
+      const { left, right } = card.getBoundingClientRect();
+      return { left, right };
+    }),
+  }));
+  expect(mobileLayout.cards.every((card) => card.left >= 0 && card.right <= mobileLayout.viewportWidth)).toBe(true);
  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
  await page.setViewportSize({ width: 844, height: 390 });
  await expect(page.locator("canvas[data-testid=game-renderer]")).toBeVisible();
@@ -69,7 +77,7 @@ test("plays a warmed match through to a Final Move and a rematch", async ({ page
  const errors = await boot(page, "fast=1&warm=1&seed=13");
  const warmed = await snapshot(page);
  expect((warmed.fighters as { aura: number; hype: number }[]).every((fighter) => fighter.aura === 9 && fighter.hype === 3)).toBe(true);
- await expect(page.locator(".hype-pip.on").first()).toBeVisible();
+ await expect(page.getByLabel("3 of 3 Hype").first()).toBeVisible();
  const deadline = Date.now() + 180_000;
  let sawFinal = false;
  while (Date.now() < deadline) {

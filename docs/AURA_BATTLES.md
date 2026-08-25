@@ -13,8 +13,9 @@ rule outcome.
 3. To counter, play the category whose arrow points at the incoming category.
 4. The last unanswered move takes the moment. Then play your Final Move to win.
 
-The first match exposes those three statements contextually, in that order. No rules modal is
-required before the player can act.
+The first match exposes those three statements contextually, in that order. The counter cue becomes
+the concrete answer (for example, `CHAOS BEATS COPY THAT`) rather than a second explanatory panel.
+No rules modal is required before the player can act.
 
 ## The counter map
 
@@ -27,7 +28,8 @@ required before the player can act.
 
 Every core card is a legal opener. A counter is legal only when this map says its category beats
 the current card. The UI leaves the full hand readable, highlights legal counters, and puts the
-same `BEATS` arrow on every core card. A chain has at most three cards.
+same `BEATS` arrow on every core card. A card exposes only one additional detail—rider, risk, or
+Final-counter badge—so the choice stays readable. A chain has at most three cards.
 
 ## Scoring, risk, and Final Moves
 
