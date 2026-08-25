@@ -2,3 +2,16 @@ node_modules/
 dist/
 test-results/
 playwright-report/
+blob-report/
+playwright/.cache/
+
+# Codex local attachments and temporary runtime artifacts
+.codex-remote-attachments/
+.codex-cache/
+.codex-temp/
+
+# Claude local runtime artifacts; project launch config and skills stay tracked
+.claude/cache/
+.claude/logs/
+.claude/tmp/
+.claude/settings.local.json

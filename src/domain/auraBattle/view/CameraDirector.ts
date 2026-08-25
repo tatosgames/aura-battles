@@ -17,6 +17,22 @@ const SHOTS: Record<ShotId, Shot> = {
  WIN: { offset: [0, 2.6, 7.4], look: [0, 1.4, 0], fov: 43, bias: .3, ease: 2 },
 };
 const scratch = new Vector3();
+const DEG = Math.PI / 180;
+/** The desktop framing this shot table was tuned against; narrower aspects widen from here. */
+const REFERENCE_ASPECT = 16 / 9;
+const MAX_VERTICAL_FOV = 70;
+/**
+ * A shot's `fov` is a vertical field of view tuned for `REFERENCE_ASPECT`. On a narrower (portrait)
+ * screen, keeping that vertical FOV crops the horizontal frame sharply — exactly where the two
+ * fighters stand offset left/right. Widen the vertical FOV just enough to hold the same horizontal
+ * FOV instead, so neither fighter falls out of frame on a phone held vertically.
+ */
+const aspectAwareFov = (verticalFov: number, aspect: number): number => {
+ if (aspect >= REFERENCE_ASPECT) return verticalFov;
+ const horizontalAtReference = 2 * Math.atan(Math.tan((verticalFov * DEG) / 2) * REFERENCE_ASPECT);
+ const widened = (2 * Math.atan(Math.tan(horizontalAtReference / 2) / aspect)) / DEG;
+ return Math.min(MAX_VERTICAL_FOV, widened);
+};
 export class CameraDirector {
  private shot: ShotId = "DUEL"; private subject: 0 | 1 = 0; private shakeAmount = 0; private orbit = 0;
  private readonly position = new Vector3(0, 3.4, 9.8); private readonly target = new Vector3(0, 1.5, 0); private fov = 44;
@@ -38,7 +54,7 @@ export class CameraDirector {
   const ease = Math.min(1, shot.ease * dt);
   this.position.lerp(scratch.set(anchorX + shot.offset[0] * sign + swing, anchorY + shot.offset[1], anchorZ + shot.offset[2] - Math.abs(swing) * .35), ease);
   this.target.lerp(scratch.set(anchorX + shot.look[0], anchorY * .5 + shot.look[1], anchorZ + shot.look[2]), Math.min(1, shot.ease * 1.4 * dt));
-  this.fov += (shot.fov - this.fov) * ease;
+  this.fov += (aspectAwareFov(shot.fov, camera.aspect || REFERENCE_ASPECT) - this.fov) * ease;
   this.shakeAmount = Math.max(0, this.shakeAmount - dt * 2.2);
   const jitter = this.shakeAmount * this.shakeAmount * .55;
   camera.position.set(this.position.x + Math.sin(elapsed * 57) * jitter, this.position.y + Math.sin(elapsed * 71) * jitter, this.position.z + Math.sin(elapsed * 43) * jitter);

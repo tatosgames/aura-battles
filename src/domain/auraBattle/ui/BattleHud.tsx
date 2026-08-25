@@ -30,20 +30,24 @@ const WAITING: Partial<Record<Phase, string>> = {
  PERFORM: "", RECOVER: "", SCORE: "", INTRO: "AURA BATTLES", FINAL_DECLARED: "FINAL MOVE INCOMING",
  FINAL_PERFORM: "", MATCH_OVER: "",
 };
+const ANSWERING_PHASES: Phase[] = ["COUNTER", "FINAL_COUNTER"];
 export function BattleHud({ state, actions }: { state: BattleSnapshot; actions: BattleActions }) {
  const you = state.fighters[HUMAN];
  const them = state.fighters[HUMAN === 0 ? 1 : 0];
  const yourTurn = state.promptSide === HUMAN;
  const offered: CardId[] = yourTurn ? state.options : [];
  const banner = yourTurn ? PROMPT[state.phase] ?? "" : WAITING[state.phase] ?? "";
- const chainNames = state.chain.map((entry) => cardOf(entry.card).name);
+ // Only surfaced while there is something to answer — the rest of the time it was ambient chrome
+ // duplicating what the arena performance and the callouts already show.
+ const answering = ANSWERING_PHASES.includes(state.phase) && state.chain.length > 0
+  ? cardOf(state.chain[state.chain.length - 1].card).name
+  : null;
  return (
   <div className="hud">
    <div className="hud-top">
     <Meters fighter={you} mirrored={false} active={state.activeSide === you.side} />
     <div className="hud-center">
-     <div className="hud-turn">TURN {state.turn}</div>
-     {chainNames.length > 0 && <div className="hud-chain">{chainNames.join("  →  ")}</div>}
+     {answering && <div className="hud-answering">answering {answering}</div>}
      {banner && <div className={`hud-banner${yourTurn ? " urgent" : ""}`}>{banner}</div>}
      <WindowTimer startedAt={state.windowStartedAt} seconds={yourTurn ? state.windowSeconds : 0} />
     </div>
@@ -62,26 +66,28 @@ export function BattleHud({ state, actions }: { state: BattleSnapshot; actions: 
     </div>
    ) : (
     <div className="hand">
-     {(state.phase === "FAIL" && yourTurn ? offered : you.hand).map((card, index) => (
-      <CardView
-       key={`${card}-${index}`}
-       card={card}
-       enabled={yourTurn && offered.includes(card)}
-       onPlay={actions.playCard}
-      />
-     ))}
-     <div className="hand-side">
-      {state.canDeclareFinal && (
-       <button type="button" className="primary final" onClick={actions.declareFinal}>
-        FINAL MOVE<small>{cardOf(you.finalMove).name}</small>
-       </button>
-      )}
-      {yourTurn && state.phase !== "CHOOSE" && (
-       <button type="button" className="ghost" onClick={actions.pass}>LET IT LAND</button>
-      )}
-      {you.recoveries.length > 0 && <div className="pile">🩹 {you.recoveries.length} recoveries left</div>}
-      <div className="pile">🂠 {you.deckCount} in deck · 🪑 {state.propCount} props on stage</div>
+     <div className="hand-track">
+      {(state.phase === "FAIL" && yourTurn ? offered : you.hand).map((card, index) => (
+       <CardView
+        key={`${card}-${index}`}
+        card={card}
+        enabled={yourTurn && offered.includes(card)}
+        onPlay={actions.playCard}
+       />
+      ))}
      </div>
+     {(state.canDeclareFinal || (yourTurn && state.phase !== "CHOOSE")) && (
+      <div className="hand-side">
+       {state.canDeclareFinal && (
+        <button type="button" className="primary final" onClick={actions.declareFinal}>
+         FINAL MOVE<small>{cardOf(you.finalMove).name}</small>
+        </button>
+       )}
+       {yourTurn && state.phase !== "CHOOSE" && (
+        <button type="button" className="ghost" onClick={actions.pass}>LET IT LAND</button>
+       )}
+      </div>
+     )}
     </div>
    )}
   </div>

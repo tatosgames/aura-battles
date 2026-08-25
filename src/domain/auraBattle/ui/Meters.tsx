@@ -7,7 +7,10 @@ export function Meters({ fighter, mirrored, active }: { fighter: FighterPublic; 
   <div className={`meter${mirrored ? " meter-right" : ""}${active ? " meter-active" : ""}`}>
    <div className="meter-head">
     <span className="meter-name">{fighter.name}</span>
-    <span className="meter-value">{fighter.aura * 1000}</span>
+    <span className="meter-value">
+     {fighter.aura * 1000}
+     {fighter.recoveries.length > 0 && <span className="meter-recoveries" title="Recoveries left">🩹×{fighter.recoveries.length}</span>}
+    </span>
    </div>
    <div className="meter-bar"><i style={{ width: `${(fighter.aura / AURA_TO_WIN) * 100}%` }} /></div>
    <div className="meter-hype">
