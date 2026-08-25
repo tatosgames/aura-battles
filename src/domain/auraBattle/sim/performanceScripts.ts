@@ -30,7 +30,6 @@ export const SCRIPTS={
  VICTORY_POSE:{duration:2.4,keys:[{t:0,pose:"VICTORY",cue:"crowdPop"},{t:1.7,pose:"SUNGLASSES"}]},
  // DEADPAN — the comedy is that almost nothing happens.
  NO_REACTION:{duration:2.2,keys:[{t:0,pose:"STARE",balance:1,cue:"focus"},{t:1.6,pose:"STARE",cue:"crowdPop"}]},
- CHECK_PHONE:{duration:2.3,keys:[{t:0,pose:"PHONE",cue:"focus"},{t:1.7,pose:"PHONE",cue:"crowdPop"}]},
  LOOK_AWAY:{duration:2.2,keys:[{t:0,pose:"LOOK_AWAY",cue:"focus"},{t:1.6,pose:"ARMS_CROSSED"}]},
  WALK_AWAY:{duration:2.6,keys:[...walk(0,6,"far"),{t:2.0,pose:"ARMS_CROSSED",cue:"crowdPop"}]},
  ABSOLUTE_SILENCE:{duration:2.3,keys:[{t:0,pose:"ARMS_CROSSED",cue:"focus"},{t:1.7,pose:"STARE",cue:"crowdPop"}]},
@@ -38,7 +37,6 @@ export const SCRIPTS={
  SLOW_CLAP:{duration:2.6,keys:[{t:0,pose:"CLAP_A",cue:"focus"},{t:.4,pose:"CLAP_B"},{t:.8,pose:"CLAP_A"},{t:1.2,pose:"CLAP_B"},{t:1.6,pose:"CLAP_A",cue:"crowdPop"},{t:2.1,pose:"SHRUG"}]},
  DO_IT_BETTER:{duration:2.8,keys:[{t:0,pose:"POINT",cue:"focus"},{t:.5,mirrorOpponent:true},{t:1.4,pose:"FLEX",cue:"crowdPop"},{t:2.2,pose:"VICTORY"}]},
  COPY_THAT:{duration:2.4,keys:[{t:0,pose:"SHRUG"},{t:.5,mirrorOpponent:true,cue:"focus"},{t:1.8,pose:"SHRUG",cue:"crowdPop"}]},
- WRONG_PERSON:{duration:2.6,keys:[{t:0,pose:"POINT",cue:"focus"},{t:.9,pose:"SLOW_TURN"},{t:1.7,pose:"SHRUG",cue:"crowdPop"}]},
  NPC_REACTION:{duration:2.4,keys:[{t:0,pose:"STARE",cue:"focus"},{t:.5,pose:"IDLE"},{t:.9,pose:"STARE"},{t:1.3,pose:"IDLE"},{t:1.7,pose:"STARE",cue:"crowdPop"}]},
  // CHAOS — props, impulses and a real chance of eating the floor.
  CHAIR_ENTRANCE:{duration:2.8,keys:[{t:0,pose:"GRAB",spawnProp:"near",cue:"reveal"},...walk(.5,3,"near"),{t:1.5,pose:"CART_PUSH",nudgeProp:3},{t:2.1,pose:"STARE",cue:"crowdPop"}],

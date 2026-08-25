@@ -33,6 +33,11 @@ const WAITING: Partial<Record<Phase, string>> = {
 };
 const ANSWERING_PHASES: Phase[] = ["COUNTER", "FINAL_COUNTER"];
 const DECISION_PHASES: Phase[] = ["CHOOSE", "COUNTER", "FAIL", "FINAL_COUNTER"];
+const TUTORIAL = {
+ OBJECTIVE: "REACH 10 AURA + 3 HYPE. THEN PLAY FINAL MOVE.",
+ MOVE: "PLAY ANY CARD. ITS ARROW SHOWS WHAT IT BEATS.",
+ COUNTER: "FIND THE ICON THAT BEATS THE INCOMING MOVE.",
+} as const;
 export function BattleHud({ state, actions }: { state: BattleSnapshot; actions: BattleActions }) {
  const you = state.fighters[HUMAN];
  const them = state.fighters[HUMAN === 0 ? 1 : 0];
@@ -41,14 +46,15 @@ export function BattleHud({ state, actions }: { state: BattleSnapshot; actions: 
  const answering = ANSWERING_PHASES.includes(state.phase) && state.chain.length > 0
   ? cardOf(state.chain[state.chain.length - 1].card).name
   : null;
+ const required = state.requiredCounterCategory;
  const prompt = yourTurn
   ? `${PROMPT[state.phase] ?? ""}${answering ? ` · ${answering}` : ""}`
   : WAITING[state.phase] ?? "";
  const showDecision = yourTurn && DECISION_PHASES.includes(state.phase);
- const visibleCards = state.phase === "CHOOSE" ? you.hand : offered;
+ // Keep every card readable in a counter window: the valid category is highlighted rather than hidden.
+ const visibleCards = state.phase === "FAIL" ? offered : you.hand;
  const availabilityOf = (card: CardId): CardAvailability => {
   if (offered.includes(card)) return "playable";
-  if (state.phase === "CHOOSE" && cardOf(card).counters.includes("FINAL")) return "reserved";
   return "unavailable";
  };
  return (
@@ -57,6 +63,8 @@ export function BattleHud({ state, actions }: { state: BattleSnapshot; actions: 
     <Meters fighter={you} mirrored={false} active={state.activeSide === you.side} onFinal={state.canDeclareFinal ? actions.declareFinal : undefined} />
     <div className="hud-center">
      {prompt ? <div className={`hud-prompt${yourTurn ? " urgent" : ""}`}>{prompt}</div> : null}
+     {state.tutorial ? <div className="hud-tutorial">{TUTORIAL[state.tutorial]}</div> : null}
+     {required ? <div className="hud-context"><GameIcon name={required}/> {required} BEATS {answering?.toUpperCase()}</div> : null}
      {yourTurn && state.phase === "FAIL" ? <div className="hud-context"><GameIcon name="RECOVERY"/>{you.recoveries.length} RECOVERIES LEFT</div> : null}
      <WindowTimer startedAt={state.windowStartedAt} seconds={yourTurn ? state.windowSeconds : 0} />
     </div>

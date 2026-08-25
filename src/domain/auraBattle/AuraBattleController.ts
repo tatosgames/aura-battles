@@ -5,11 +5,11 @@ import { ArenaController } from "./sim/ArenaController";
 import { MoveDirector } from "./sim/MoveDirector";
 import type { Cue } from "./sim/performanceScripts";
 import type { PropKind } from "./sim/PropSystem";
-import { cardOf, type CardId } from "./rules/CardDefinition";
+import { cardOf, type CardId, type CoreCategory } from "./rules/CardDefinition";
 import { HYPE_TO_WIN } from "./rules/HypeSystem";
 import { COMBO_LABEL, type ChainEntry, type FighterState, type Phase, type Side } from "./rules/BattleState";
 import { createFighter, discard, refill } from "./rules/Deck";
-import { legalCounters, legalOpeners, MAX_CHAIN } from "./rules/CounterSystem";
+import { beatenBy, legalCounters, legalOpeners, MAX_CHAIN } from "./rules/CounterSystem";
 import { applyFailure, applyOutcome, resolveChain, rollFailure } from "./rules/CardResolver";
 import { applyFinalSteal, canDeclareFinal, legalFinalCounters, resolveFinalCounter } from "./rules/FinalMoveSystem";
 import { AIController } from "./ai/AIController";
@@ -21,6 +21,7 @@ export type BattleSnapshot = {
  windowSeconds: number; windowStartedAt: number;
  fighters: [FighterPublic, FighterPublic];
  chain: ChainEntry[]; options: CardId[]; canDeclareFinal: boolean;
+ requiredCounterCategory: CoreCategory | null; tutorial: "OBJECTIVE" | "MOVE" | "COUNTER" | null;
  callouts: Callout[]; winner: Side | null; propCount: number; turn: number;
 };
 export type BattleActions = { playCard(card: CardId): void; pass(): void; declareFinal(): void; restart(): void };
@@ -59,6 +60,8 @@ export class AuraBattleController {
  private failSide: Side | null = null;
  private finalAttacker: Side | null = null;
  private finalStolen = false;
+ private tutorial: "OBJECTIVE" | "MOVE" | "COUNTER" | null = "OBJECTIVE";
+ private counterTutorialShown = false;
  private timeScale = 1;
  private timeScaleLeft = 0;
  private calloutId = 1;
@@ -151,7 +154,7 @@ export class AuraBattleController {
   this.chain = []; this.failSide = null;
   this.fighters.forEach((fighter) => refill(fighter, this.rng));
   if (this.phase !== "INTRO") { this.activeSide = this.activeSide === 0 ? 1 : 0; this.turn++; }
-  this.fighters[this.activeSide].counteredLastTurn = false;
+  if (this.tutorial === "OBJECTIVE") this.tutorial = "MOVE";
   this.openWindow(0);
   this.setPhase("CHOOSE", this.activeSide, legalOpeners(this.fighters[this.activeSide]));
  }
@@ -163,22 +166,24 @@ export class AuraBattleController {
   else if (this.phase === "FINAL_COUNTER") this.settleFinal(card);
  }
  private pass(): void {
-  if (this.phase === "COUNTER") this.closeChain();
+  if (this.phase === "COUNTER") { if (this.tutorial === "COUNTER") this.tutorial = null; this.closeChain(); }
   else if (this.phase === "FAIL") this.enterScore();
   else if (this.phase === "FINAL_COUNTER") this.settleFinal(null);
  }
  private commitOpener(side: Side, card: CardId): void {
-  if (!this.fighters[side].hand.includes(card)) return;
+  if (!legalOpeners(this.fighters[side]).includes(card)) return;
+  if (side === HUMAN && this.tutorial === "MOVE") this.tutorial = null;
   this.perform(side, card);
   const defender: Side = side === 0 ? 1 : 0;
   const options = legalCounters(this.fighters[defender], this.chain);
   if (options.length === 0) { this.closeChain(); return; }
+  if (defender === HUMAN && !this.counterTutorialShown) { this.tutorial = "COUNTER"; this.counterTutorialShown = true; }
   this.openWindow(this.timings.counter);
   this.setPhase("COUNTER", defender, options);
  }
  private commitCounter(side: Side, card: CardId): void {
   if (!legalCounters(this.fighters[side], this.chain).includes(card)) return;
-  this.fighters[side].counteredLastTurn = true;
+  if (side === HUMAN && this.tutorial === "COUNTER") this.tutorial = null;
   this.perform(side, card);
   this.say("COUNTER", "counter", side);
   this.events.emit("cue", { cue: "focus", side });
@@ -186,6 +191,7 @@ export class AuraBattleController {
   const responder: Side = side === 0 ? 1 : 0;
   const options = legalCounters(this.fighters[responder], this.chain);
   if (options.length === 0) { this.closeChain(); return; }
+  if (responder === HUMAN && !this.counterTutorialShown) { this.tutorial = "COUNTER"; this.counterTutorialShown = true; }
   this.openWindow(this.timings.counter);
   this.setPhase("COUNTER", responder, options);
  }
@@ -209,7 +215,7 @@ export class AuraBattleController {
    applyOutcome(this.fighters, outcome);
    if (outcome.combo) this.say(COMBO_LABEL[outcome.combo], "combo", outcome.winner);
    this.say(`+${outcome.auraGain * 1000} AURA`, "aura", outcome.winner);
-   if (outcome.auraSteal > 0) this.say("AURA STOLEN", "counter", outcome.winner === 0 ? 1 : 0);
+   if (outcome.wasCounter) this.say("MOMENT STOLEN", "counter", outcome.winner);
   }
   this.openWindow(0);
   this.setPhase("PERFORM", null);
@@ -269,21 +275,19 @@ export class AuraBattleController {
   const defender: Side = attacker === 0 ? 1 : 0;
   const finalMove = this.fighters[attacker].finalMove;
   if (card && legalFinalCounters(this.fighters[defender], finalMove).includes(card)) {
-   const result = resolveFinalCounter(card, finalMove, this.rng);
+   const result = resolveFinalCounter(card, finalMove);
    discard(this.fighters[defender], card);
    if (result.stolen) {
     this.finalStolen = true;
-    applyFinalSteal(this.fighters[attacker], this.fighters[defender], result.perfect);
+    applyFinalSteal(this.fighters[attacker], this.fighters[defender]);
     // The attacker's own moment is cut off mid-performance: that is the entire point of the shot.
     this.directors[attacker].stop();
     this.arena.fighters[attacker].setPose("SHRUG");
     this.arena.fighters[attacker].setBalance(.25);
     this.directors[defender].play(cardOf(card), false);
-    this.say(result.perfect ? "PERFECT COUNTER" : "COUNTERED", "counter", defender);
+    this.say("PERFECT COUNTER", "counter", defender);
     this.say("+9999 AURA", "aura", defender);
     this.events.emit("cue", { cue: "slowmo", side: defender });
-   } else {
-    this.say("NOT ENOUGH", "fail", defender);
    }
   }
   this.openWindow(0);
@@ -340,12 +344,14 @@ export class AuraBattleController {
   };
  }
  private snapshot(revision: number): BattleSnapshot {
+  const incoming = this.chain.length > 0 ? cardOf(this.chain[this.chain.length - 1].card).category : null;
   return {
    revision, phase: this.phase, activeSide: this.activeSide, promptSide: this.promptSide,
    windowSeconds: this.windowSeconds, windowStartedAt: this.windowStartedAt,
    fighters: [this.publicFighter(this.fighters[0]), this.publicFighter(this.fighters[1])],
    chain: this.chain.map((entry) => ({ ...entry })), options: [...this.options],
    canDeclareFinal: this.phase === "CHOOSE" && this.promptSide === HUMAN && canDeclareFinal(this.fighters[HUMAN]),
+   requiredCounterCategory: this.phase === "COUNTER" && incoming ? beatenBy(incoming) : null, tutorial: this.tutorial,
    callouts: [...this.callouts], winner: this.winner, propCount: this.arena.props.count(), turn: this.turn,
   };
  }
@@ -357,6 +363,7 @@ export class AuraBattleController {
   this.fighters = this.deal();
   this.chain = []; this.callouts = []; this.winner = null; this.turn = 1; this.activeSide = 0;
   this.failSide = null; this.finalAttacker = null; this.finalStolen = false;
+  this.tutorial = "OBJECTIVE"; this.counterTutorialShown = false;
   this.timeScale = 1; this.timeScaleLeft = 0;
   this.openWindow(this.timings.intro);
   this.setPhase("INTRO", null);

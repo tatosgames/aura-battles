@@ -36,6 +36,21 @@ test("opens a duel, plays a card and moves the Aura meter", async ({ page }) => 
  }, null, { timeout: 60_000 });
  expect(errors).toEqual([]);
 });
+test("teaches the map and keeps non-counters readable", async ({ page }) => {
+ const errors = await boot(page, "fast=1&seed=13");
+ await waitForPrompt(page);
+ await expect(page.getByText("PLAY ANY CARD. ITS ARROW SHOWS WHAT IT BEATS.")).toBeVisible();
+ await page.locator(".card-playable").first().click();
+ await page.waitForFunction(() => {
+  const state = (window as unknown as { __aura: { bridge: { getSnapshot(): { phase: string; promptSide: number | null } } } }).__aura.bridge.getSnapshot();
+  return state.phase === "COUNTER" && state.promptSide === 0;
+ }, null, { timeout: 60_000 });
+ await expect(page.getByText("FIND THE ICON THAT BEATS THE INCOMING MOVE.")).toBeVisible();
+ await expect(page.getByText(/BEATS/).first()).toBeVisible();
+ expect(await page.locator(".card-playable").count()).toBeGreaterThan(0);
+ expect(await page.locator(".card-unavailable").count()).toBeGreaterThan(0);
+ expect(errors).toEqual([]);
+});
 test("keeps the R3F renderer alive through portrait and landscape resizes", async ({ page }) => {
  const errors = await boot(page, "fast=1&seed=13");
  await page.setViewportSize({ width: 390, height: 844 });

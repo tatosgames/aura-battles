@@ -62,6 +62,8 @@ button.meter-final:hover{background:#6d28d9}
 .hud-prompt.urgent{color:#fff}
 .hud-context{display:flex;align-items:center;gap:5px;color:#86efac;font-size:.6rem;font-weight:800;letter-spacing:.06em}
 .hud-context svg{width:14px;height:14px}
+.hud-tutorial{max-width:min(88vw,420px);padding:5px 8px;border:1px solid #475569;border-radius:7px;background:#0b1120e8;color:#dbeafe;
+ font-size:clamp(.58rem,1.8vw,.68rem);font-weight:800;letter-spacing:.06em}
 .timer{width:min(210px,60vw);height:6px;border-radius:99px;background:#1d2740;overflow:hidden}
 .timer-fill{height:100%;background:linear-gradient(90deg,#fbbf24,#ef4444);transform-origin:left center}
 
@@ -98,6 +100,9 @@ button.meter-final:hover{background:#6d28d9}
 .card-yield-hype{color:#fbbf24}
 .card-name{font-size:clamp(.82rem,2.6vw,.98rem);font-weight:800;line-height:1.15}
 .card-blurb{font-size:clamp(.62rem,2vw,.72rem);color:#a3b4cd;flex:1}
+.card-rule,.card-rider,.card-risk{font-size:.55rem;font-weight:800;letter-spacing:.04em}
+.card-rule{display:flex;align-items:center;gap:3px;color:#dbeafe}.card-rule svg{width:12px;height:12px;color:var(--accent)}
+.card-rider{color:#a7f3d0}.card-risk{color:#fca5a5}
 .card-state{display:flex;align-items:center;gap:4px;color:#c084fc;font-size:.52rem;font-weight:900;letter-spacing:.08em}
 .card-state svg{width:12px;height:12px}
 
