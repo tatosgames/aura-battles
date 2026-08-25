@@ -51,7 +51,7 @@ export function BattleHud({ state, actions }: { state: BattleSnapshot; actions: 
    </div>
    <div className="callouts">
     {state.callouts.slice(-3).map((callout) => (
-     <div key={callout.id} className={`callout tone-${callout.tone}${callout.side === HUMAN ? " mine" : ""}`}>{callout.text}</div>
+     <div key={callout.id} className={`callout tone-${callout.tone}${callout.side === null ? "" : callout.side === HUMAN ? " side-left" : " side-right"}`}>{callout.text}</div>
     ))}
    </div>
    {state.phase === "MATCH_OVER" ? (

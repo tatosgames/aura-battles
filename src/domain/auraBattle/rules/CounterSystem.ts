@@ -17,7 +17,12 @@ export function legalCounters(fighter:FighterState,chain:ChainEntry[]):CardId[]{
  const target=chain[chain.length-1].card;
  return fighter.hand.filter((card)=>canCounter(card,target));
 }
-/** Opening moves are everything that is not purely reactive, so a hand is never fully dead. */
+/**
+ * Openers prefer cards that stand on their own. Reactive cards stay playable only when the hand
+ * holds nothing else, so a turn is never dead but a counter is never wasted for no reason either.
+ */
 export function legalOpeners(fighter:FighterState):CardId[]{
- return fighter.hand.filter((card)=>!cardOf(card).counters.includes("FINAL"));
+ const playable=fighter.hand.filter((card)=>!cardOf(card).counters.includes("FINAL"));
+ const standalone=playable.filter((card)=>cardOf(card).counters.length===0);
+ return standalone.length>0?standalone:playable;
 }

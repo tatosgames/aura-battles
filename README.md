@@ -1,6 +1,18 @@
-# Physics Game Template
+# Aura Battles
 
-A proprietary, standalone Vite foundation for browser physics games. It ships one neutral local physics sandbox demonstrating fixed simulation, Rapier ownership, immutable UI state, and Three.js presentation.
+A fast 1v1 card duel where two idiot ragdolls act out every card on a small theatrical stage. Steal
+the moment, build Hype, and land a Final Move before your opponent counters it.
+
+**The rules decide the outcome. Physics sells the outcome.** Card results resolve in a pure seeded
+domain layer first; only then are the ragdolls told what to perform, including their failures. A
+chair that physically misses can never change who won the exchange.
+
+Read the [game design and systems notes](docs/AURA_BATTLES.md) for the rules, the card families, the
+Final Move steal, and how the active ragdoll works.
+
+It is built on the proprietary physics game template that still lives in this repository: a Vite
+foundation with fixed simulation, Rapier ownership, immutable UI state and Three.js presentation. The
+original neutral sandbox is still reachable at `/?sandbox`.
 
 ## Prerequisites and commands
 
@@ -15,7 +27,14 @@ npm run test
 npm run test:browser
 ```
 
-Use **Spawn box/sphere/capsule** to add bodies, click a body to apply a throw impulse, and use pause, reset, and debug-wireframe controls to inspect the simulation. All assets, sounds, and adapters are local; the default adapter makes no network request.
+`npm run dev` opens Aura Battles. Play a card from your hand of three, answer your opponent inside
+the counter window, and close the match with a Final Move once both meters are full. Useful URL
+flags: `?debug`, `?seed=123`, `?fast=1`, `?warm=1` and `?sandbox` — all listed in
+[docs/AURA_BATTLES.md](docs/AURA_BATTLES.md#debug-flags).
+
+At `/?sandbox` the template demo is unchanged: spawn boxes, spheres and capsules, click a body to
+throw it, and use pause, reset and debug-wireframe to inspect the simulation. All assets, sounds and
+adapters are local; the default adapter makes no network request.
 
 ## Deploying to Cloudflare Pages
 
@@ -49,9 +68,11 @@ For CI, provide `CLOUDFLARE_API_TOKEN` through the CI secret store (never commit
 
 React 19, React Three Fiber, Three.js, deterministic Rapier, TypeScript strict mode, Vitest, and Playwright.
 
-This template deliberately does not provide game rules, characters, combat, scores, menus, matchmaking, analytics, remote assets, or a platform SDK integration. Build those as a domain layer on top of `src/engine`, never by importing from `src/demo`.
+`src/engine` still holds no game rules, characters, scores, menus, matchmaking, analytics, remote
+assets or platform SDK integration. Aura Battles lives entirely in `src/domain/auraBattle`, built on
+top of `src/engine` public contracts and importing nothing from `src/demo`.
 
-Read [architecture](docs/ARCHITECTURE.md), [extension instructions](docs/EXTENDING.md), [reuse matrix](docs/REUSE_MATRIX.md), [provenance](docs/PROVENANCE.md), [R3F/Drei guidance](docs/react-three-fiber-and-drei.md), [Three.js physics](docs/threejs-physics.md), [game-design and juice rules](docs/GAME_DESIGN_AND_JUICE_RULES.md), [vendor integration](docs/VENDOR_INTEGRATION.md), [UI architecture and responsive rules](docs/UI_ARCHITECTURE_AND_RESPONSIVE_RULES.md), and [UI/transitions](docs/UI_AND_REACT_TRANSITIONS.md) before extending it.
+Read [Aura Battles](docs/AURA_BATTLES.md), [architecture](docs/ARCHITECTURE.md), [extension instructions](docs/EXTENDING.md), [reuse matrix](docs/REUSE_MATRIX.md), [provenance](docs/PROVENANCE.md), [R3F/Drei guidance](docs/react-three-fiber-and-drei.md), [Three.js physics](docs/threejs-physics.md), [game-design and juice rules](docs/GAME_DESIGN_AND_JUICE_RULES.md), [vendor integration](docs/VENDOR_INTEGRATION.md), [UI architecture and responsive rules](docs/UI_ARCHITECTURE_AND_RESPONSIVE_RULES.md), and [UI/transitions](docs/UI_AND_REACT_TRANSITIONS.md) before extending it.
 
 Repository-local implementation guidance for future agents lives in [`.agents/skills/threejs-rapier-template/SKILL.md`](.agents/skills/threejs-rapier-template/SKILL.md).
 

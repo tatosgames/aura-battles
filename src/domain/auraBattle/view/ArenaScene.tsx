@@ -6,8 +6,10 @@ import type { PropKind } from "../sim/PropSystem";
 import { FighterView, PALETTES } from "./FighterView";
 import { PropsView } from "./PropsView";
 import { Crowd } from "./Crowd";
+import { Sparks } from "./Sparks";
+import type { SparkPool } from "./SparkPool";
 import type { CameraDirector } from "./CameraDirector";
-export function ArenaScene({arena,director,propOrder,excitement,debug=false}:{arena:ArenaController;director:CameraDirector;propOrder:{id:string;kind:PropKind}[];excitement:{current:number};debug?:boolean}){
+export function ArenaScene({arena,director,propOrder,excitement,sparks,debug=false}:{arena:ArenaController;director:CameraDirector;propOrder:{id:string;kind:PropKind}[];excitement:{current:number};sparks:SparkPool;debug?:boolean}){
  const camera=useThree((state)=>state.camera) as PerspectiveCamera;
  const scene=useThree((state)=>state.scene);
  useEffect(()=>()=>arena.physics.updateDebug(scene,false),[arena,scene]);
@@ -24,8 +26,9 @@ export function ArenaScene({arena,director,propOrder,excitement,debug=false}:{ar
  return <>
   <color attach="background" args={["#0a0d16"]}/>
   <fog attach="fog" args={["#0a0d16",16,42]}/>
-  <ambientLight intensity={.55} color="#8fa3c8"/>
-  <directionalLight position={[6,12,7]} intensity={1.1} castShadow shadow-mapSize={[1024,1024]}>
+  <ambientLight intensity={.7} color="#8fa3c8"/>
+  <hemisphereLight args={["#4d6ea8","#161c2b",.9]}/>
+  <directionalLight position={[6,12,7]} intensity={1.4} castShadow shadow-mapSize={[1024,1024]}>
    <orthographicCamera attach="shadow-camera" args={[-12,12,12,-12,.5,40]}/>
   </directionalLight>
   <pointLight ref={spotA} position={[-5,7,3]} color="#5b8cff" distance={30} decay={2}/>
@@ -52,5 +55,6 @@ export function ArenaScene({arena,director,propOrder,excitement,debug=false}:{ar
   <FighterView side={0} transforms={arena.transforms} palette={PALETTES[0]}/>
   <FighterView side={1} transforms={arena.transforms} palette={PALETTES[1]}/>
   <PropsView order={propOrder} transforms={arena.propTransforms}/>
+  <Sparks pool={sparks}/>
  </>;
 }

@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { CATEGORY_EMOJI, cardOf, type CardCategory, type CardId } from "../rules/CardDefinition";
 export const CATEGORY_COLOR: Record<CardCategory, string> = {
  COOL: "#3b82f6", DEADPAN: "#8fa3bf", MEME: "#f59e0b", CHAOS: "#ef4444", RECOVERY: "#22c55e", FINAL: "#a855f7",
@@ -9,7 +10,7 @@ export function CardView({ card, enabled, onPlay, compact }: { card: CardId; ena
   <button
    type="button"
    className={`card${enabled ? " card-live" : ""}${compact ? " card-compact" : ""}`}
-   style={{ "--accent": accent } as React.CSSProperties}
+   style={{ "--accent": accent } as CSSProperties}
    disabled={!enabled}
    onClick={() => onPlay?.(card)}
   >

@@ -6,9 +6,8 @@ import { MoveDirector } from "./sim/MoveDirector";
 import type { Cue } from "./sim/performanceScripts";
 import type { PropKind } from "./sim/PropSystem";
 import { cardOf, type CardId } from "./rules/CardDefinition";
-import { AURA_TO_WIN } from "./rules/AuraSystem";
 import { HYPE_TO_WIN } from "./rules/HypeSystem";
-import { COMBO_LABEL, type ChainEntry, type FighterState, type Outcome, type Phase, type Side } from "./rules/BattleState";
+import { COMBO_LABEL, type ChainEntry, type FighterState, type Phase, type Side } from "./rules/BattleState";
 import { createFighter, discard, refill } from "./rules/Deck";
 import { legalCounters, legalOpeners, MAX_CHAIN } from "./rules/CounterSystem";
 import { applyFailure, applyOutcome, resolveChain, rollFailure } from "./rules/CardResolver";
@@ -65,10 +64,10 @@ export class AuraBattleController {
  private calloutId = 1;
  private propOrderRevision = -1;
  private propOrderCache: { id: string; kind: PropKind }[] = [];
- private constructor(readonly arena: ArenaController, private readonly timings: Timings, private readonly seed: number) {
+ private constructor(readonly arena: ArenaController, private readonly timings: Timings, private readonly seed: number, private readonly warm = false) {
   this.rng = createRng(seed);
   this.ai = new AIController(this.rng.fork(7));
-  this.fighters = [createFighter(0, this.rng), createFighter(1, this.rng)];
+  this.fighters = this.deal();
   const sink = (cue: Cue, side: Side) => this.handleCue(cue, side);
   this.directors = [new MoveDirector(arena, 0, sink), new MoveDirector(arena, 1, sink)];
   this.bridge = new GameBridge<BattleSnapshot, BattleActions>(this.snapshot(0), {
@@ -79,9 +78,15 @@ export class AuraBattleController {
   });
   this.openWindow(timings.intro);
  }
- static async create(config: unknown, options: { seed?: number; fast?: boolean } = {}): Promise<AuraBattleController> {
+ static async create(config: unknown, options: { seed?: number; fast?: boolean; warm?: boolean } = {}): Promise<AuraBattleController> {
   const arena = await ArenaController.create(config);
-  return new AuraBattleController(arena, options.fast ? FAST : NORMAL, options.seed ?? Math.floor(Math.random() * 1e9));
+  return new AuraBattleController(arena, options.fast ? FAST : NORMAL, options.seed ?? Math.floor(Math.random() * 1e9), options.warm);
+ }
+ /** `warm` starts both meters one card short of a Final Move, for tuning and testing the finale. */
+ private deal(): [FighterState, FighterState] {
+  const dealt: [FighterState, FighterState] = [createFighter(0, this.rng), createFighter(1, this.rng)];
+  if (this.warm) dealt.forEach((fighter) => { fighter.aura = 9; fighter.hype = 3; });
+  return dealt;
  }
 
  // ---- presentation-facing reads, all plain numbers ---------------------------------
@@ -349,7 +354,7 @@ export class AuraBattleController {
   this.arena.reset();
   this.directors.forEach((director) => director.stop());
   this.rng = createRng(this.seed + this.turn * 104729);
-  this.fighters = [createFighter(0, this.rng), createFighter(1, this.rng)];
+  this.fighters = this.deal();
   this.chain = []; this.callouts = []; this.winner = null; this.turn = 1; this.activeSide = 0;
   this.failSide = null; this.finalAttacker = null; this.finalStolen = false;
   this.timeScale = 1; this.timeScaleLeft = 0;
@@ -358,4 +363,3 @@ export class AuraBattleController {
  }
  dispose(): void { this.arena.dispose(); }
 }
-export const MATCH_AURA_TO_WIN = AURA_TO_WIN;

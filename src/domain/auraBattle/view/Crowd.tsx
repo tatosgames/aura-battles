@@ -7,7 +7,7 @@ const dummy=new Object3D();
 export function Crowd({excitement}:{excitement:{current:number}}){
  const mesh=useRef<InstancedMesh>(null);
  const seats=useMemo(()=>Array.from({length:COUNT},(_,index)=>{
-  const ring=index%3;const angle=(index/COUNT)*Math.PI*2+ring*.11;const radius=9.4+ring*1.5;
+  const ring=index%3;const angle=(index/COUNT)*Math.PI*2+ring*.11;const radius=10.8+ring*1.9;
   return {x:Math.cos(angle)*radius,z:Math.sin(angle)*radius,y:.6+ring*.7,phase:index*1.7,scale:.8+((index*37)%13)/26};
  }),[]);
  const colors=useMemo(()=>{
@@ -27,9 +27,9 @@ export function Crowd({excitement}:{excitement:{current:number}}){
   node.instanceMatrix.needsUpdate=true;
  });
  return <instancedMesh ref={mesh} args={[undefined,undefined,COUNT]} frustumCulled={false}>
-  <capsuleGeometry args={[.28,.5,4,8]}/>
-  <meshStandardMaterial vertexColors roughness={.9}>
+  <capsuleGeometry args={[.24,.44,4,8]}>
    <instancedBufferAttribute attach="attributes-color" args={[colors,3]}/>
-  </meshStandardMaterial>
+  </capsuleGeometry>
+  <meshStandardMaterial vertexColors roughness={.9}/>
  </instancedMesh>;
 }

@@ -38,8 +38,12 @@ canvas{touch-action:none;display:block}
 .timer{width:210px;height:6px;border-radius:99px;background:#1d2740;overflow:hidden}
 .timer-fill{height:100%;background:linear-gradient(90deg,#fbbf24,#ef4444);transform-origin:left center}
 
+.flash{position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 50% 45%,#ffffff55,transparent 60%);opacity:0}
+@keyframes flash{from{opacity:1}to{opacity:0}}
 .callouts{display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none}
-.callout{font-weight:900;letter-spacing:.1em;font-size:1.7rem;text-shadow:0 3px 22px #000;animation:pop .25s cubic-bezier(.2,1.5,.4,1)}
+.callout{--dx:0;transform:translateX(var(--dx));font-weight:900;letter-spacing:.1em;font-size:1.7rem;text-shadow:0 3px 22px #000;animation:pop .25s cubic-bezier(.2,1.5,.4,1),calloutFade .5s 2.1s forwards}
+.callout.side-left{--dx:-18vw}
+.callout.side-right{--dx:18vw}
 .tone-aura{color:#7dd3fc}
 .tone-counter{color:#fbbf24}
 .tone-fail{color:#f87171}
@@ -72,7 +76,8 @@ canvas{touch-action:none;display:block}
 .endcard p{margin:0 0 16px;color:#9fb3d1;font-size:.85rem}
 
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
-@keyframes pop{from{transform:scale(.55);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes calloutFade{to{opacity:0;transform:translateX(var(--dx)) translateY(-16px) scale(.92)}}
+@keyframes pop{from{transform:translateX(var(--dx)) scale(.55);opacity:0}to{transform:translateX(var(--dx)) scale(1);opacity:1}}
 
 /* Template sandbox, reachable at /?sandbox ---------------------------------------- */
 main{min-height:100vh;padding:20px;display:grid;grid-template-rows:auto auto auto 1fr;gap:12px;background:#f5f7fa;color:#17212b;overflow:auto}
