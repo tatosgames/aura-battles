@@ -40,6 +40,9 @@ export class PropSystem {
   return best;
  }
  positionOf(id:string):[number,number,number]|undefined{const prop=this.props.get(id);if(!prop)return undefined;const p=prop.body.translation();return [p.x,p.y,p.z];}
+ horizontalVelocityOf(id:string):[number,number]|undefined{const prop=this.props.get(id);if(!prop)return undefined;const v=prop.body.linvel();return [v.x,v.z];}
+ /** Overwrites x/z velocity directly, leaving the fall/bounce (y) untouched — the stage's containment wall. */
+ setHorizontalVelocity(id:string,x:number,z:number):void{const prop=this.props.get(id);if(!prop)return;const v=prop.body.linvel();prop.body.setLinvel({x,y:v.y,z},true);}
  /** Throw a prop. Direction is normalised here so a card never has to reason about magnitudes. */
  yeet(id:string,dx:number,dy:number,dz:number,power:number):void{
   const prop=this.props.get(id);if(!prop)return;

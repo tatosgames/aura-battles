@@ -8,11 +8,19 @@ import { PropSystem, type PropSnapshot } from "./PropSystem";
 import { FIGHTER_FLOATS, RagdollController } from "./RagdollController";
 import { PELVIS_HEIGHT, type FighterPartId } from "./fighterSkeleton";
 export const MAX_PROPS=16;
-export type BoundaryCatch={x:number;z:number;side:0|1};
-/** How far past the visible lip a body may drift before the stage's force field catches it. */
-const BOUNDARY_MARGIN=.6;
-const BOUNDARY_SPRING=46;
-const BOUNDARY_CAP=20;
+/** `side:null` means a prop, not a fighter, got caught — still worth a pulse, just no camera side to cut to. */
+export type BoundaryCatch={x:number;z:number;side:0|1|null};
+/**
+ * Ground friction and damping mean nothing in this game ever slides anywhere near the stage's full
+ * physical radius under normal impulses — so the force field engages at a fraction of it, catching a
+ * fighter well before the true edge rather than being a safety net that (in practice) never fires.
+ * A thrown prop carries far more momentum than anything a fighter's own script applies to itself, so
+ * a pure positional spring is too weak to arrest it before it visibly leaves the stage; the field also
+ * cancels the outward component of velocity directly, like hitting a soft wall, not just a tug.
+ */
+const BOUNDARY_LIMIT_RATIO=.5;
+const BOUNDARY_SPRING=60;
+const BOUNDARY_CAP=34;
 /** Contact force above which an incidental knock earns a visible flinch, not just silence. */
 const KNOCK_THRESHOLD=900;
 const KNOCK_SCALE=4000;
@@ -70,25 +78,37 @@ export class ArenaController {
   this.syncTransforms();
  }
  /**
-  * A soft, physical force field: past the visible lip, a proportional impulse pulls a body back
-  * toward centre. Fighters trigger the visible catch presentation reads via `takeBoundaryCatch`;
-  * props are quietly contained the same way with no VFX attached.
+  * A soft, physical force field: past the visible lip, the outward component of velocity is cancelled
+  * outright (a wall, not a wobble — this is what actually stops a hard-thrown prop) and a proportional
+  * impulse keeps easing the body back toward centre afterwards. Both fighters and props trigger the
+  * visible catch presentation reads via `takeBoundaryCatch`.
   */
  private applyBoundaryContainment(dt:number):void{
-  const limit=this.config.stageRadius+BOUNDARY_MARGIN;
+  const limit=this.config.stageRadius*BOUNDARY_LIMIT_RATIO;
   this.fighters.forEach((fighter,side)=>{
    const p=fighter.position();const distance=Math.hypot(p.x,p.z);
    if(distance<=limit)return;
+   const nx=p.x/distance,nz=p.z/distance;
+   const pelvis=fighter.part("pelvis");const v=pelvis.linvel();
+   const outward=v.x*nx+v.z*nz;
+   if(outward>0)pelvis.setLinvel({x:v.x-nx*outward*1.2,y:v.y,z:v.z-nz*outward*1.2},true);
    const push=Math.min((distance-limit)*BOUNDARY_SPRING,BOUNDARY_CAP)*dt;
-   fighter.applyImpulse("pelvis",-p.x/distance*push,0,-p.z/distance*push);
+   fighter.applyImpulse("pelvis",-nx*push,0,-nz*push);
    this.boundaryCatch={x:p.x,z:p.z,side:side as 0|1};
   });
   this.props.order().forEach(({id})=>{
    const position=this.props.positionOf(id);if(!position)return;
    const [x,,z]=position;const distance=Math.hypot(x,z);
    if(distance<=limit)return;
+   const nx=x/distance,nz=z/distance;
+   const velocity=this.props.horizontalVelocityOf(id);
+   if(velocity){
+    const outward=velocity[0]*nx+velocity[1]*nz;
+    if(outward>0)this.props.setHorizontalVelocity(id,velocity[0]-nx*outward*1.2,velocity[1]-nz*outward*1.2);
+   }
    const push=Math.min((distance-limit)*BOUNDARY_SPRING,BOUNDARY_CAP)*dt;
-   this.props.nudge(id,-x/distance*push,0,-z/distance*push);
+   this.props.nudge(id,-nx*push,0,-nz*push);
+   this.boundaryCatch={x,z,side:null};
   });
  }
  /** Peak contact force since the last read, used purely to trigger presentation shake. */

@@ -71,6 +71,38 @@ FINAL_DECLARED → FINAL_COUNTER → FINAL_PERFORM → win, or return to SCORE a
 those results. `ui/` renders the DOM HUD. `AuraBattleController` is the only bridge between the
 rule state machine and the ragdoll performance. Keep those ownership boundaries intact.
 
+## Wobble, jitter, and the stage's force field
+
+The performance layer trades some of its earlier precision for arcade chaos, without ever letting
+that chaos touch a card's outcome:
+
+- **Idle sway** (`RagdollController`) adds a small, fixed, non-random sine-sum offset to every driven
+  part's pose target, scaled by `stiffness * clamp(balance, .15, 1)` — a held pose reads as loose and
+  alive instead of a statue, and the sway fades out as `balance` drops so it never fights a real fall.
+- **Presentation RNG** (`MoveDirector`) jitters every scripted impulse/torque (±20% magnitude, a few
+  degrees of horizontal spread) and draws a per-performance pace multiplier (~0.92–1.08), so the same
+  card never plays identically twice. This RNG is derived from the match seed via simple integer
+  mixing and never touches `AuraBattleController`'s own rules RNG — replaying a `?seed=` still
+  reproduces the exact same match outcome, flourish included.
+- **Flinch** (`RagdollController.flinch`) is a small, deterministic reaction — direction opposes the
+  pelvis's current velocity, no randomness needed — fired by `ArenaController` whenever a contact
+  notice clears a noticeable-knock threshold, so an incidental bump finally does something instead of
+  nothing.
+- **The stage's force field** (`ArenaController.applyBoundaryContainment`) cancels the outward
+  component of velocity for anyone who crosses `stageRadius * 0.5` — a wall, not a tug, which is what
+  actually arrests a hard-thrown prop — then eases them back with a proportional impulse. It fires for
+  both fighters and props; only fighters get the camera cut, but `BoundaryPulse`/`BoundaryRing` render
+  a yellow ring pulse at the catch point either way. The threshold sits well inside the stage's visual
+  radius on purpose: ground friction kills horizontal momentum fast enough that nothing in this game
+  ever slides near the true edge under normal impulses, so a safety net tuned to the literal edge would
+  never visibly fire.
+- **Camera juice** (`CameraDirector`) layers a fast-decaying `punch` channel on top of the existing
+  `shakeAmount` rattle: a dutch-tilt roll (`camera.rotateZ` after `lookAt`), a brief zoom-in on the
+  FOV, and a directional shove along the duel axis. `shake(...)` calls in `AuraBattleApp.tsx` are
+  scaled by `1 + excitement * .5`, and `COUNTER_SNAP`/`PERFECT COUNTER` also flash a CSS-only
+  speed-line overlay (`.speedlines`), reusing the same `pop()`-style replay trick as the existing
+  `.flash`.
+
 ## Verification contract
 
 Before shipping a rules change, verify: 25-card count; map legality; every core card as an opener;

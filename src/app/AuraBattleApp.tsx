@@ -89,7 +89,11 @@ export function AuraBattleApp() {
      const impact = created.arena.takeImpact();
      if (impact > 900) shake(Math.min(.5, impact / 6000));
      const caught = created.arena.takeBoundaryCatch();
-     if (caught) { boundaryPulse.current.trigger(caught.x, caught.z); director.current.set("IMPACT", caught.side); shake(.65); sparks.current.burst(caught.x, .3, caught.z, "counter", 34, 5); }
+     if (caught) {
+      boundaryPulse.current.trigger(caught.x, caught.z);
+      if (caught.side !== null) director.current.set("IMPACT", caught.side);
+      shake(.65); sparks.current.burst(caught.x, .3, caught.z, "counter", 34, 5);
+     }
     },
     onVisibilityChange: (hidden) => { if (hidden) void lifecycle.current.stopGameplay(); },
    });
